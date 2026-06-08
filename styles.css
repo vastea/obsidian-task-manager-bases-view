@@ -1,0 +1,597 @@
+/* Task Manager Bases View — all styles use Obsidian CSS variables so the
+   plugin adapts to the active theme and light/dark mode. Prefix: tm- */
+
+.tm-empty {
+	padding: var(--size-4-8);
+	color: var(--text-muted);
+	text-align: center;
+}
+
+/* ===================== Kanban ===================== */
+
+.tm-kanban-root {
+	height: 100%;
+	overflow: hidden;
+}
+
+.tm-kanban {
+	display: flex;
+	gap: var(--size-4-3);
+	align-items: stretch;
+	height: 100%;
+	padding: var(--size-4-3);
+	overflow-x: auto;
+}
+
+.tm-column {
+	display: flex;
+	flex-direction: column;
+	flex: 0 0 280px;
+	width: 280px;
+	/* Full height so the whole column is a drop target even with few cards. */
+	height: 100%;
+	/* Keep the column's main background tint, kept subtle so the flat style reads. */
+	background: var(--tm-col-bg, var(--background-secondary));
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	overflow: hidden;
+}
+
+.tm-column.is-drop-target {
+	box-shadow: 0 0 0 2px var(--tm-col-accent, var(--interactive-accent)) inset;
+}
+
+/* ---- Collapsed: vertical bar ---- */
+.tm-column-collapsed {
+	flex: 0 0 auto;
+	width: 40px;
+	align-items: center;
+	gap: var(--size-4-2);
+	padding: var(--size-4-2) 0;
+	cursor: pointer;
+	text-align: center;
+}
+.tm-column-collapsed:hover {
+	border-color: var(--background-modifier-border-hover);
+}
+.tm-column-collapsed .tm-column-count {
+	margin: 0;
+}
+.tm-column-vtitle {
+	writing-mode: vertical-rl;
+	text-orientation: mixed;
+	font-weight: var(--font-semibold);
+	font-size: var(--font-ui-small);
+	color: var(--text-normal);
+	white-space: nowrap;
+	/* Promote to its own layer + integer transform to avoid half-pixel blur
+	   from flex centring of the narrow vertical text. */
+	transform: translateZ(0);
+	backface-visibility: hidden;
+}
+
+/* ---- Header (expanded): heading left, actions right ---- */
+.tm-column-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--size-4-2);
+	padding: var(--size-4-2) var(--size-4-2) var(--size-4-1);
+	flex-shrink: 0;
+}
+.tm-column-heading {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+	overflow: hidden;
+	font-weight: var(--font-semibold);
+}
+.tm-column-actions {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-1);
+	flex-shrink: 0;
+}
+
+.tm-column .tm-icon-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	background: transparent;
+	border: none;
+	box-shadow: none;
+	border-radius: var(--radius-s);
+	color: var(--text-muted);
+	cursor: pointer;
+}
+.tm-column .tm-icon-btn:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+.tm-icon-btn .svg-icon {
+	width: 15px;
+	height: 15px;
+}
+
+/* Soft status indicator — a small dot, not a coloured block. */
+.tm-column-dot {
+	flex-shrink: 0;
+	width: 9px;
+	height: 9px;
+	border-radius: 50%;
+	background: var(--tm-col-accent, var(--text-muted));
+}
+
+.tm-column-title {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.tm-column-count {
+	flex-shrink: 0;
+	font-size: var(--font-ui-smaller);
+	font-weight: var(--font-normal);
+	color: var(--text-faint);
+}
+
+/* Card list fills the column; the add button flows right after the last card. */
+.tm-column-body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-2);
+	flex: 1 1 auto;
+	min-height: 0;
+	padding: 0 var(--size-4-2) var(--size-4-2);
+	overflow-y: auto;
+}
+
+/* Add button blends into the column background (only cards are solid blocks). */
+/* Parent-scoped selectors raise specificity above the app/theme `button`
+   rules, so the *default* (non-hover) state also stays transparent. */
+.tm-column .tm-column-add {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-1);
+	width: 100%;
+	padding: var(--size-4-2);
+	/* Same fill as the column background so it reads as part of the column. */
+	background: transparent;
+	border: none;
+	box-shadow: none;
+	border-radius: var(--radius-s);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	text-align: left;
+	cursor: pointer;
+	transition: color 0.12s ease;
+}
+.tm-column .tm-column-add:hover,
+.tm-column .tm-column-add:focus-visible {
+	background: transparent;
+	color: var(--tm-col-accent, var(--interactive-accent));
+}
+.tm-column-add-icon {
+	display: inline-flex;
+}
+.tm-column-add-icon .svg-icon {
+	width: 15px;
+	height: 15px;
+}
+
+.tm-card {
+	/* Two layered backgrounds: inner = card fill, outer = border area. The outer
+	   is a flat border colour by default and a theme-accent gradient on hover,
+	   giving a thin gradient border with rounded corners (no layout shift). */
+	background-image:
+		linear-gradient(var(--background-primary), var(--background-primary)),
+		linear-gradient(var(--background-modifier-border), var(--background-modifier-border));
+	background-origin: border-box;
+	background-clip: padding-box, border-box;
+	border: 1.5px solid transparent;
+	border-radius: var(--radius-s);
+	padding: var(--size-4-2);
+	cursor: pointer;
+	transition: background-image 0.12s ease;
+}
+.tm-card:hover,
+.tm-card:focus-visible {
+	/* Border highlight uses the card's own column colour (matches the column
+	   drop-target highlight), as a soft gradient of that colour. */
+	background-image:
+		linear-gradient(var(--background-primary), var(--background-primary)),
+		linear-gradient(
+			135deg,
+			var(--tm-col-accent, var(--interactive-accent)),
+			color-mix(in srgb, var(--tm-col-accent, var(--interactive-accent)) 35%, transparent)
+		);
+	outline: none;
+}
+.tm-card.is-dragging {
+	opacity: 0.5;
+}
+.tm-card[draggable="true"] {
+	cursor: grab;
+}
+
+.tm-card-title {
+	font-weight: var(--font-semibold);
+	margin-bottom: var(--size-4-1);
+}
+
+
+.tm-card-props {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--size-4-1) var(--size-4-2);
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+}
+
+/* Render all property values inline (no chips/boxes — dates included). */
+.tm-card-prop * {
+	background-color: transparent !important;
+	border-color: transparent !important;
+	box-shadow: none !important;
+}
+.tm-card-prop {
+	display: inline-flex;
+	align-items: center;
+	min-width: 0;
+}
+
+/* ===================== Timeline ===================== */
+
+.tm-timeline-root {
+	height: 100%;
+	overflow: hidden;
+}
+
+.tm-timeline {
+	height: 100%;
+}
+
+.tm-tl-scroll {
+	height: 100%;
+	overflow: auto;
+	position: relative;
+}
+
+/* Sized to the full track width so every row stretches across (otherwise block
+   rows only span the viewport width and their separators stop mid-way). */
+.tm-tl-content {
+	display: flex;
+	flex-direction: column;
+	width: max-content;
+	min-width: 100%;
+	position: relative;
+}
+
+/* Vertical cell grid spanning the whole body (starts after the 180px label gutter). */
+.tm-tl-grid {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 180px;
+	z-index: 0;
+	pointer-events: none;
+}
+.tm-tl-gridline {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	border-left: 1px solid var(--background-modifier-border);
+}
+.tm-tl-gridline.is-major {
+	border-left-color: var(--text-faint);
+}
+
+.tm-tl-header {
+	display: flex;
+	position: sticky;
+	top: 0;
+	z-index: 3;
+	background: var(--background-primary);
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.tm-tl-corner {
+	flex: 0 0 180px;
+	position: sticky;
+	left: 0;
+	z-index: 4;
+	background: var(--background-primary);
+	border-right: 1px solid var(--background-modifier-border);
+}
+
+.tm-tl-axis {
+	position: relative;
+	height: 28px;
+	flex: 0 0 auto;
+}
+
+.tm-tl-tick {
+	position: absolute;
+	top: 0;
+	height: 100%;
+	border-left: 1px solid var(--background-modifier-border);
+}
+.tm-tl-tick.is-major {
+	border-left-color: var(--text-faint);
+}
+.tm-tl-tick-label {
+	position: absolute;
+	left: 3px;
+	top: 5px;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	white-space: nowrap;
+}
+
+/* Full-width band (spans the whole track); the text inside stays pinned left. */
+.tm-tl-lane-label {
+	z-index: 2;
+	padding: var(--size-4-1) 0;
+	background: var(--background-secondary);
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+.tm-tl-lane-label-text {
+	position: sticky;
+	left: 0;
+	display: inline-block;
+	padding: 0 var(--size-4-3);
+	font-weight: var(--font-semibold);
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+}
+
+.tm-tl-row {
+	display: flex;
+	align-items: stretch;
+	border-bottom: 1px solid var(--background-modifier-border-hover);
+	/* Above the grid (transparent body lets the grid lines show through). */
+	position: relative;
+	z-index: 1;
+}
+
+.tm-tl-rowlabel {
+	flex: 0 0 180px;
+	position: sticky;
+	left: 0;
+	z-index: 2;
+	padding: var(--size-4-2) var(--size-4-3);
+	background: var(--background-primary);
+	border-right: 1px solid var(--background-modifier-border);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	cursor: pointer;
+}
+.tm-tl-rowlabel:hover {
+	color: var(--text-accent);
+}
+
+.tm-tl-track {
+	position: relative;
+	min-height: 36px;
+	flex: 0 0 auto; /* keep the explicit track width; do not shrink */
+}
+
+.tm-bar {
+	position: absolute;
+	top: 6px;
+	height: 24px;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-radius: var(--radius-s);
+	display: flex;
+	align-items: center;
+	padding: 0 var(--size-4-2);
+	cursor: grab;
+	overflow: visible;
+	box-sizing: border-box;
+}
+.tm-bar.is-dragging {
+	opacity: 0.7;
+	cursor: grabbing;
+}
+.tm-bar-label {
+	font-size: var(--font-ui-smaller);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	pointer-events: none;
+}
+.tm-bar-handle {
+	position: absolute;
+	top: 0;
+	width: 8px;
+	height: 100%;
+	cursor: ew-resize;
+}
+.tm-bar-handle-start { left: -2px; }
+.tm-bar-handle-end { right: -2px; }
+
+.tm-milestone {
+	position: absolute;
+	top: 6px;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-1);
+	cursor: grab;
+}
+.tm-milestone.is-dragging { opacity: 0.7; }
+.tm-milestone-dot {
+	width: 14px;
+	height: 14px;
+	transform: rotate(45deg);
+	background: var(--color-orange, var(--interactive-accent));
+	border-radius: 2px;
+	flex-shrink: 0;
+}
+.tm-milestone-label {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	white-space: nowrap;
+	pointer-events: none;
+}
+
+/* ===================== Calendar ===================== */
+
+.tm-calendar-root {
+	padding: 0;
+	overflow: hidden;
+}
+
+.tm-cal {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.tm-cal-toolbar {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-3);
+	padding: var(--size-4-2) var(--size-4-3);
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+.tm-cal-nav {
+	display: flex;
+	gap: var(--size-4-1);
+}
+.tm-cal-title {
+	font-weight: var(--font-semibold);
+}
+
+/* Shared vertical scroll for header + body so the day columns line up
+   (one scrollbar; header and grid get the same available width). */
+.tm-cal-scroll {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+}
+
+.tm-cal-dayhead {
+	display: flex;
+	position: sticky;
+	top: 0;
+	z-index: 5;
+	background: var(--background-primary);
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+.tm-cal-gutter-head {
+	flex: 0 0 56px;
+}
+.tm-cal-daycol-head {
+	flex: 1 1 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: var(--size-4-1);
+	border-left: 1px solid var(--background-modifier-border);
+}
+.tm-cal-daycol-head.is-today {
+	color: var(--text-accent);
+	font-weight: var(--font-semibold);
+}
+.tm-cal-dow { font-size: var(--font-ui-smaller); color: var(--text-muted); }
+
+.tm-cal-body {
+	display: flex;
+}
+
+.tm-cal-gutter {
+	flex: 0 0 56px;
+}
+.tm-cal-hour {
+	position: relative;
+	border-bottom: 1px solid var(--background-modifier-border-hover);
+	box-sizing: border-box;
+}
+.tm-cal-hour-label {
+	position: absolute;
+	top: -7px;
+	right: var(--size-4-1);
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+}
+
+.tm-cal-daycol {
+	flex: 1 1 0;
+	position: relative;
+	border-left: 1px solid var(--background-modifier-border);
+	box-sizing: border-box;
+}
+.tm-cal-daycol.is-today {
+	background: var(--background-modifier-hover);
+}
+.tm-cal-slot {
+	border-bottom: 1px solid var(--background-modifier-border-hover);
+	box-sizing: border-box;
+}
+
+.tm-cal-block {
+	position: absolute;
+	left: 2px;
+	right: 2px;
+	z-index: 1;
+	background: var(--interactive-accent);
+	border: 1px solid var(--background-primary);
+	color: var(--text-on-accent);
+	border-radius: var(--radius-s);
+	padding: 2px var(--size-4-1);
+	font-size: var(--font-ui-smaller);
+	overflow: hidden;
+	cursor: grab;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+.tm-cal-block.has-color {
+	background: var(--tm-block-color);
+	border-color: var(--background-primary);
+}
+.tm-cal-block.is-dragging { opacity: 0.7; cursor: grabbing; }
+.tm-cal-block-cat {
+	align-self: flex-start;
+	padding: 0 4px;
+	border-radius: var(--radius-s);
+	background: rgba(255, 255, 255, 0.25);
+	font-size: var(--font-ui-smaller);
+}
+.tm-cal-block.is-preview {
+	background: var(--interactive-accent);
+	opacity: 0.4;
+	pointer-events: none;
+}
+.tm-cal-block-time { font-weight: var(--font-semibold); }
+.tm-cal-block-link { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tm-cal-block-note { color: var(--text-on-accent); opacity: 0.85; }
+.tm-cal-block-resize {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 7px;
+	cursor: ns-resize;
+}
+
+/* Log block modal */
+.tm-log-modal-time {
+	margin-bottom: var(--size-4-3);
+	color: var(--text-muted);
+	font-weight: var(--font-semibold);
+}
+
+/* Settings */
+.tm-setting-reload-note {
+	margin-top: var(--size-4-1);
+	font-size: var(--font-ui-smaller);
+	color: var(--text-faint);
+}

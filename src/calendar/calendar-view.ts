@@ -1,0 +1,209 @@
+import { type WorkspaceLeaf, ItemView, debounce } from "obsidian";
+import { mount, unmount } from "svelte";
+import WeekGrid from "./WeekGrid.svelte";
+import { type CalContext, type CalDay, type CalEntry, setCalState } from "./state.svelte";
+import { dailyNotePath, deleteLogLine, insertLog, readDayEntries, updateLogTime } from "./log-io";
+import { LogBlockModal } from "./log-modal";
+import { type Category, parseCategories } from "../settings";
+import { addDays, sameDay, startOfDay } from "../shared/date-util";
+import { colorForName } from "../shared/palette";
+import { openDetail } from "../shared/open-detail";
+import { t } from "../i18n.svelte";
+import type TaskManagerPlugin from "../main";
+
+export const TM_CALENDAR_VIEW = "tm-calendar";
+
+const HOUR_HEIGHT = 40;
+
+/** Resolve a colour token (named like "blue" or raw CSS like "#4c8bf5") to a CSS colour. */
+function resolveColor(raw: string): string | null {
+	if (!raw) return null;
+	const c = colorForName(raw);
+	return c ? c.accent : raw;
+}
+
+export class CalendarView extends ItemView {
+	private plugin: TaskManagerPlugin;
+	private weekStart: Date;
+	private component: Record<string, unknown> | null = null;
+	private refreshDebounced: () => void;
+
+	constructor(leaf: WorkspaceLeaf, plugin: TaskManagerPlugin) {
+		super(leaf);
+		this.plugin = plugin;
+		this.weekStart = this.computeWeekStart(new Date());
+		this.refreshDebounced = debounce(() => void this.refresh(), 250, true);
+	}
+
+	getViewType(): string {
+		return TM_CALENDAR_VIEW;
+	}
+
+	getDisplayText(): string {
+		return t("weeklyLog");
+	}
+
+	getIcon(): string {
+		return "calendar-clock";
+	}
+
+	protected async onOpen(): Promise<void> {
+		this.contentEl.addClass("tm-calendar-root");
+		this.component = mount(WeekGrid, { target: this.contentEl });
+
+		// Re-read when the vault changes (debounced).
+		this.registerEvent(this.app.vault.on("modify", this.refreshDebounced));
+		this.registerEvent(this.app.vault.on("create", this.refreshDebounced));
+		this.registerEvent(this.app.vault.on("delete", this.refreshDebounced));
+		this.registerEvent(this.app.vault.on("rename", this.refreshDebounced));
+
+		await this.refresh();
+	}
+
+	protected async onClose(): Promise<void> {
+		if (this.component) {
+			void unmount(this.component);
+			this.component = null;
+		}
+		this.contentEl.empty();
+		this.contentEl.removeClass("tm-calendar-root");
+	}
+
+	private computeWeekStart(date: Date): Date {
+		const d = startOfDay(date);
+		const day = d.getDay(); // 0 = Sunday
+		const offset = this.plugin.settings.weekStart === "monday" ? (day + 6) % 7 : day;
+		return addDays(d, -offset);
+	}
+
+	/**
+	 * Resolve a `(category)` token into a display name + colour.
+	 * The token may carry an inline colour like `Dev|#4c8bf5` (same `name|color`
+	 * scheme as the kanban predefined values — named colour or any CSS colour);
+	 * otherwise the colour falls back to the matching settings category.
+	 * Whole feature is gated by "Enable categories".
+	 */
+	private resolveCategory(token: string | null): { name: string | null; color: string | null } {
+		if (!token || !this.plugin.settings.categoriesEnabled) return { name: null, color: null };
+		const idx = token.indexOf("|");
+		const name = (idx === -1 ? token : token.slice(0, idx)).trim() || null;
+		let color: string | null = null;
+		if (idx !== -1) {
+			color = resolveColor(token.slice(idx + 1).trim());
+		} else if (name) {
+			const cat = this.categories().find((c) => c.name.toLowerCase() === name.toLowerCase());
+			if (cat && cat.color) color = resolveColor(cat.color);
+		}
+		return { name, color };
+	}
+
+	private categories(): Category[] {
+		return this.plugin.settings.categoriesEnabled
+			? parseCategories(this.plugin.settings.categoriesText)
+			: [];
+	}
+
+	/** Live-refresh this view when global settings change (debounced). */
+	rerender(): void {
+		this.refreshDebounced();
+	}
+
+	private context(): CalContext {
+		return {
+			openEntry: (entry) => this.openEntry(entry),
+			createBlock: (dayIndex, start, end) => this.createBlock(dayIndex, start, end),
+			updateBlock: (entry, start, end) => void this.updateBlock(entry, start, end),
+			deleteBlock: (entry) => void this.deleteBlock(entry),
+			gotoPrev: () => {
+				this.weekStart = addDays(this.weekStart, -7);
+				void this.refresh();
+			},
+			gotoNext: () => {
+				this.weekStart = addDays(this.weekStart, 7);
+				void this.refresh();
+			},
+			gotoToday: () => {
+				this.weekStart = this.computeWeekStart(new Date());
+				void this.refresh();
+			},
+		};
+	}
+
+	private async refresh(): Promise<void> {
+		const settings = this.plugin.settings;
+		const today = startOfDay(new Date());
+		const days: CalDay[] = [];
+		const entries: CalEntry[] = [];
+
+		for (let i = 0; i < 7; i++) {
+			const date = addDays(this.weekStart, i);
+			const dayEntries = await readDayEntries(this.app, date, settings);
+			days.push({
+				date,
+				isToday: sameDay(date, today),
+				hasNote: dayEntries.length > 0,
+			});
+			for (const e of dayEntries) {
+				const { name, color } = this.resolveCategory(e.category);
+				entries.push({
+					dayIndex: i,
+					lineIndex: e.lineIndex,
+					startMinutes: e.startMinutes,
+					endMinutes: e.endMinutes,
+					link: e.link,
+					note: e.note,
+					category: name,
+					color,
+				});
+			}
+		}
+
+		const weekEnd = addDays(this.weekStart, 6);
+		const title = `${fmt(this.weekStart)} – ${fmt(weekEnd)}`;
+		setCalState({ title, days, entries, hourHeight: HOUR_HEIGHT, context: this.context() });
+	}
+
+	private openEntry(entry: CalEntry): void {
+		// A time block lives in the day's journal note — open that note at the
+		// log line (not the task the line happens to link to).
+		const date = addDays(this.weekStart, entry.dayIndex);
+		const dayNote = this.app.vault.getFileByPath(dailyNotePath(date, this.plugin.settings));
+		if (dayNote) openDetail(this.app, dayNote, null, entry.lineIndex);
+	}
+
+	private createBlock(dayIndex: number, start: number, end: number): void {
+		const date = addDays(this.weekStart, dayIndex);
+		// Open a modal to fill the description / link / category before writing.
+		new LogBlockModal(this.app, {
+			startMinutes: start,
+			endMinutes: end,
+			categories: this.categories(),
+			onSubmit: (result) => {
+				void (async () => {
+					await insertLog(this.app, date, this.plugin.settings, start, end, {
+						link: result.link,
+						note: result.note,
+						category: result.category,
+					});
+					await this.refresh();
+				})();
+			},
+		}).open();
+	}
+
+	private async updateBlock(entry: CalEntry, start: number, end: number): Promise<void> {
+		const date = addDays(this.weekStart, entry.dayIndex);
+		await updateLogTime(this.app, date, this.plugin.settings, entry.lineIndex, start, end);
+		await this.refresh();
+	}
+
+	private async deleteBlock(entry: CalEntry): Promise<void> {
+		const date = addDays(this.weekStart, entry.dayIndex);
+		await deleteLogLine(this.app, date, this.plugin.settings, entry.lineIndex);
+		await this.refresh();
+	}
+}
+
+function fmt(d: Date): string {
+	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
