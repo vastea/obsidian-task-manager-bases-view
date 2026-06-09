@@ -43,7 +43,8 @@ export function getGroupKey(app: App, entry: BasesEntry, propId: BasesPropertyId
 	if (raw === undefined || raw === null || raw === "") return null;
 	if (Array.isArray(raw)) {
 		// Multi-value property: first non-empty wins for column placement.
-		const first = raw.find((v) => v !== undefined && v !== null && v !== "");
+		const arr = raw as unknown[];
+		const first = arr.find((v) => v !== undefined && v !== null && v !== "");
 		return first === undefined ? null : String(first);
 	}
 	return String(raw);

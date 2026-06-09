@@ -30,7 +30,7 @@ export class ConfirmModal extends Modal {
 					this.close();
 					this.opts.onConfirm();
 				});
-				if (this.opts.danger) b.setWarning();
+				if (this.opts.danger) b.buttonEl.addClass("mod-warning");
 				else b.setCta();
 			})
 			.addButton((b) => b.setButtonText(this.opts.cancelText).onClick(() => this.close()));
