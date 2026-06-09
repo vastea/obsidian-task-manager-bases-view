@@ -13,6 +13,7 @@ import Board from "./Board.svelte";
 import { type KanbanColumn, type KanbanContext, setKanbanState } from "./state.svelte";
 import { isWritable, propertyName, writeProperty } from "../shared/frontmatter-writer";
 import { openDetail } from "../shared/open-detail";
+import { ConfirmModal } from "../shared/confirm-modal";
 import { colorForIndex, colorForName, neutralColor, parsePredefined } from "../shared/palette";
 import { columnId, readKanbanState, writeKanbanCollapsed } from "../shared/view-config";
 import { t } from "../i18n.svelte";
@@ -121,9 +122,9 @@ export class KanbanView extends BasesView {
 	}
 
 	private buildPredefined(context: KanbanContext): void {
-		// Predefined mode still groups through Bases: we consume `data.groupedData`
-		// (Bases applies filters + group-by) and only use the predefined values to
-		// order / colour / flag the columns, matching on each group's key value.
+		// Predefined mode still groups through Bases: `data.groupedData` (filters +
+		// group-by applied) supplies the entries; the predefined values only
+		// order / colour / flag the columns, matched on each group's key value.
 		const groups = this.data.groupedData;
 		const noGrouping = groups.length === 1 && groups[0] !== undefined && !groups[0].hasKey();
 		if (noGrouping) {
@@ -224,12 +225,20 @@ export class KanbanView extends BasesView {
 		const archiveValue = this.archiveValue();
 
 		context.archiveAll = (column: KanbanColumn) => {
-			if (!archiveValue) return;
-			void (async () => {
-				for (const entry of column.entries) {
-					await writeProperty(this.app, entry.file, groupProp, archiveValue);
-				}
-			})();
+			if (!archiveValue || column.entries.length === 0) return;
+			new ConfirmModal(this.app, {
+				title: t("archiveAllTitle"),
+				message: `${t("archiveAllConfirm")} (${column.entries.length})`,
+				confirmText: t("confirm"),
+				cancelText: t("cancel"),
+				onConfirm: () => {
+					void (async () => {
+						for (const entry of column.entries) {
+							await writeProperty(this.app, entry.file, groupProp, archiveValue);
+						}
+					})();
+				},
+			}).open();
 		};
 
 		context.contextMenu = (file: TFile, evt: MouseEvent) => {

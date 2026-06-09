@@ -17,15 +17,62 @@
 	let pointerMoved = false;
 	const DRAG_THRESHOLD_PX = 4;
 
+	// After a commit, hold the new dates until the write round-trips and fresh
+	// query data arrives, so the bar doesn't snap back during the write→requery
+	// window. Holding dates (not a delta) lets a fresh drag start from the held
+	// position instead of the stale row data.
+	let pendingStart = $state<Date | null>(null);
+	let pendingEnd = $state<Date | null>(null);
+	let hasPending = $state(false);
+	let pendingTimer: ReturnType<typeof setTimeout> | null = null;
+	// Safety net: drop the optimistic hold if the write fails (data never updates).
+	const COMMIT_HOLD_MS = 3000;
+
+	// Effective dates: the optimistic override while held, else the real row data.
+	const effStart = $derived(hasPending ? pendingStart : row.start);
+	const effEnd = $derived(hasPending ? pendingEnd : row.end);
+
 	const kind = $derived(
-		row.start && row.end ? "bar" : row.start ? "milestone-start" : row.end ? "milestone-end" : "none",
+		effStart && effEnd ? "bar" : effStart ? "milestone-start" : effEnd ? "milestone-end" : "none",
 	);
 
-	// Base geometry (without drag preview).
-	const baseStartDay = $derived(row.start ? dayDiff(row.start, rangeStart) : null);
-	const baseEndDay = $derived(row.end ? dayDiff(row.end, rangeStart) : null);
+	// Base geometry from the effective dates (without the live drag preview).
+	const baseStartDay = $derived(effStart ? dayDiff(effStart, rangeStart) : null);
+	const baseEndDay = $derived(effEnd ? dayDiff(effEnd, rangeStart) : null);
 
 	const geom = $derived(computeGeom(kind, baseStartDay, baseEndDay, dragMode, dragDeltaDays, pxPerDay));
+
+	// Re-runs whenever the row's dates change (each query update yields fresh Date
+	// objects). Once the persisted data lands, release the optimistic hold so the
+	// bar follows real data — by then the row already reflects the committed move.
+	$effect(() => {
+		void row.start;
+		void row.end;
+		clearPending();
+	});
+
+	function setPending(start: Date | null, end: Date | null) {
+		pendingStart = start;
+		pendingEnd = end;
+		hasPending = true;
+		if (pendingTimer !== null) clearTimeout(pendingTimer);
+		pendingTimer = setTimeout(clearPending, COMMIT_HOLD_MS);
+	}
+
+	function clearPending() {
+		hasPending = false;
+		pendingStart = null;
+		pendingEnd = null;
+		if (pendingTimer !== null) {
+			clearTimeout(pendingTimer);
+			pendingTimer = null;
+		}
+	}
+
+	// Clear any pending hold timer when the bar unmounts.
+	$effect(() => () => {
+		if (pendingTimer !== null) clearTimeout(pendingTimer);
+	});
 
 	function computeGeom(
 		k: string,
@@ -66,7 +113,9 @@
 		const onMove = (e: PointerEvent) => {
 			const dx = e.clientX - startX;
 			if (Math.abs(dx) > DRAG_THRESHOLD_PX) pointerMoved = true;
-			dragDeltaDays = Math.round(dx / pxPerDay);
+			// Don't shift by a whole day until the gesture is a real drag, so a
+			// still press (select) doesn't jitter the bar by a cell.
+			dragDeltaDays = pointerMoved ? Math.round(dx / pxPerDay) : 0;
 		};
 		const onUp = () => {
 			window.removeEventListener("pointermove", onMove);
@@ -81,22 +130,35 @@
 
 	function commit(mode: Mode, delta: number) {
 		if (delta === 0) return;
-		if (kind === "bar" && row.start && row.end) {
+		// Base the move off the *effective* dates (which may be an optimistic hold
+		// from a previous, not-yet-persisted drag), not the stale row data.
+		const s = effStart;
+		const e = effEnd;
+		if (kind === "bar" && s && e) {
 			if (mode === "move") {
-				context.write(row.file, { start: addDays(row.start, delta), end: addDays(row.end, delta) });
+				const ns = addDays(s, delta);
+				const ne = addDays(e, delta);
+				context.write(row.file, { start: ns, end: ne });
+				setPending(ns, ne);
 			} else if (mode === "start") {
-				let ns = addDays(row.start, delta);
-				if (ns > row.end) ns = row.end;
+				let ns = addDays(s, delta);
+				if (ns > e) ns = e;
 				context.write(row.file, { start: ns });
+				setPending(ns, e);
 			} else if (mode === "end") {
-				let ne = addDays(row.end, delta);
-				if (ne < row.start) ne = row.start;
+				let ne = addDays(e, delta);
+				if (ne < s) ne = s;
 				context.write(row.file, { end: ne });
+				setPending(s, ne);
 			}
-		} else if (kind === "milestone-start" && row.start) {
-			context.write(row.file, { start: addDays(row.start, delta) });
-		} else if (kind === "milestone-end" && row.end) {
-			context.write(row.file, { end: addDays(row.end, delta) });
+		} else if (kind === "milestone-start" && s) {
+			const ns = addDays(s, delta);
+			context.write(row.file, { start: ns });
+			setPending(ns, null);
+		} else if (kind === "milestone-end" && e) {
+			const ne = addDays(e, delta);
+			context.write(row.file, { end: ne });
+			setPending(null, ne);
 		}
 	}
 

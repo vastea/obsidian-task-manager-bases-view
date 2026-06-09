@@ -1,4 +1,4 @@
-import { type App, PluginSettingTab, Setting } from "obsidian";
+import { type App, type DropdownComponent, PluginSettingTab, Setting } from "obsidian";
 import type TaskManagerPlugin from "./main";
 import { type Lang, setLocale, t } from "./i18n.svelte";
 
@@ -18,6 +18,10 @@ export interface TaskManagerSettings {
 	dateFormat: string;
 	weekStart: WeekStart;
 	logSection: string;
+
+	/** Visible time window in the weekly grid, in whole hours (0..24, start < end). */
+	dayStartHour: number;
+	dayEndHour: number;
 
 	/** When creating a log block, also append a back-reference into the linked task. */
 	logBacklink: boolean;
@@ -39,6 +43,8 @@ export const DEFAULT_SETTINGS: TaskManagerSettings = {
 	dateFormat: "YYYY-MM-DD",
 	weekStart: "monday",
 	logSection: "Log",
+	dayStartHour: 0,
+	dayEndHour: 24,
 	logBacklink: false,
 	logBacklinkSection: "Log",
 	categoriesEnabled: false,
@@ -127,111 +133,188 @@ export class TaskManagerSettingTab extends PluginSettingTab {
 				tg.setValue(this.plugin.settings.enableCalendar).onChange(async (v) => {
 					this.plugin.settings.enableCalendar = v;
 					await this.plugin.saveSettings();
+					setCalendarVisible(v);
 				}),
 			);
 		reloadNotice(calendar);
 
-		new Setting(containerEl).setName(t("setCalendarHeading")).setHeading();
+		// All calendar settings are gathered here so they can be hidden in one go
+		// when the calendar view is disabled.
+		const calendarEls: HTMLElement[] = [];
+		const cal = (s: Setting): Setting => (calendarEls.push(s.settingEl), s);
 
-		new Setting(containerEl)
-			.setName(t("setJournalFolder"))
-			.setDesc(t("setJournalFolderDesc"))
-			.addText((tx) =>
-				tx
-					.setPlaceholder("Journal")
-					.setValue(this.plugin.settings.journalFolder)
-					.onChange(async (v) => {
-						this.plugin.settings.journalFolder = v.trim();
-						await this.plugin.saveSettings();
-					}),
-			);
+		cal(new Setting(containerEl).setName(t("setCalendarHeading")).setHeading());
 
-		new Setting(containerEl)
-			.setName(t("setDateFormat"))
-			.setDesc(t("setDateFormatDesc"))
-			.addText((tx) =>
-				tx
-					.setPlaceholder("YYYY-MM-DD")
-					.setValue(this.plugin.settings.dateFormat)
-					.onChange(async (v) => {
-						this.plugin.settings.dateFormat = v.trim() || "YYYY-MM-DD";
-						await this.plugin.saveSettings();
-					}),
-			);
+		cal(
+			new Setting(containerEl)
+				.setName(t("setJournalFolder"))
+				.setDesc(t("setJournalFolderDesc"))
+				.addText((tx) =>
+					tx
+						.setPlaceholder("Journal")
+						.setValue(this.plugin.settings.journalFolder)
+						.onChange(async (v) => {
+							this.plugin.settings.journalFolder = v.trim();
+							await this.plugin.saveSettings();
+						}),
+				),
+		);
 
-		new Setting(containerEl)
-			.setName(t("setFirstDay"))
-			.addDropdown((d) =>
-				d
-					.addOption("monday", t("setMonday"))
-					.addOption("sunday", t("setSunday"))
-					.setValue(this.plugin.settings.weekStart)
-					.onChange(async (v) => {
-						this.plugin.settings.weekStart = v as WeekStart;
-						await this.plugin.saveSettings();
-					}),
-			);
+		cal(
+			new Setting(containerEl)
+				.setName(t("setDateFormat"))
+				.setDesc(t("setDateFormatDesc"))
+				.addText((tx) =>
+					tx
+						.setPlaceholder("YYYY-MM-DD")
+						.setValue(this.plugin.settings.dateFormat)
+						.onChange(async (v) => {
+							this.plugin.settings.dateFormat = v.trim() || "YYYY-MM-DD";
+							await this.plugin.saveSettings();
+						}),
+				),
+		);
 
-		new Setting(containerEl)
-			.setName(t("setLogSection"))
-			.setDesc(t("setLogSectionDesc"))
-			.addText((tx) =>
-				tx
-					.setPlaceholder("Log")
-					.setValue(this.plugin.settings.logSection)
-					.onChange(async (v) => {
-						this.plugin.settings.logSection = v.trim() || "Log";
-						await this.plugin.saveSettings();
-					}),
-			);
+		cal(
+			new Setting(containerEl)
+				.setName(t("setFirstDay"))
+				.addDropdown((d) =>
+					d
+						.addOption("monday", t("setMonday"))
+						.addOption("sunday", t("setSunday"))
+						.setValue(this.plugin.settings.weekStart)
+						.onChange(async (v) => {
+							this.plugin.settings.weekStart = v as WeekStart;
+							await this.plugin.saveSettings();
+						}),
+				),
+		);
 
-		new Setting(containerEl)
-			.setName(t("setBacklink"))
-			.setDesc(t("setBacklinkDesc"))
-			.addToggle((tg) =>
-				tg.setValue(this.plugin.settings.logBacklink).onChange(async (v) => {
-					this.plugin.settings.logBacklink = v;
-					await this.plugin.saveSettings();
-				}),
-			);
-
-		new Setting(containerEl)
-			.setName(t("setBacklinkSection"))
-			.setDesc(t("setBacklinkSectionDesc"))
-			.addText((tx) =>
-				tx
-					.setPlaceholder("Log")
-					.setValue(this.plugin.settings.logBacklinkSection)
-					.onChange(async (v) => {
-						this.plugin.settings.logBacklinkSection = v.trim() || "Log";
-						await this.plugin.saveSettings();
-					}),
-			);
-
-		new Setting(containerEl).setName(t("setCategoriesHeading")).setHeading();
-
-		new Setting(containerEl)
-			.setName(t("setEnableCategories"))
-			.setDesc(t("setEnableCategoriesDesc"))
-			.addToggle((tg) =>
-				tg.setValue(this.plugin.settings.categoriesEnabled).onChange(async (v) => {
-					this.plugin.settings.categoriesEnabled = v;
-					await this.plugin.saveSettings();
-				}),
-			);
-
-		new Setting(containerEl)
-			.setName(t("setCategories"))
-			.setDesc(t("setCategoriesDesc"))
-			.addTextArea((tx) => {
-				tx
-					.setPlaceholder("Dev|blue\nMeeting|rgb(224,164,88)\nBreak|#7bbf6a")
-					.setValue(this.plugin.settings.categoriesText)
-					.onChange(async (v) => {
-						this.plugin.settings.categoriesText = v;
+		// Whole-hour window, clamped so start < end. The counterpart dropdown is
+		// updated in place to avoid a full re-render.
+		const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`;
+		let startDd: DropdownComponent | null = null;
+		let endDd: DropdownComponent | null = null;
+		cal(
+			new Setting(containerEl)
+				.setName(t("setDayStart"))
+				.setDesc(t("setDayWindowDesc"))
+				.addDropdown((d) => {
+					startDd = d;
+					for (let h = 0; h <= 23; h++) d.addOption(String(h), hourLabel(h));
+					d.setValue(String(this.plugin.settings.dayStartHour)).onChange(async (v) => {
+						const start = Number(v);
+						this.plugin.settings.dayStartHour = start;
+						if (this.plugin.settings.dayEndHour <= start) {
+							this.plugin.settings.dayEndHour = Math.min(24, start + 1);
+							endDd?.setValue(String(this.plugin.settings.dayEndHour));
+						}
 						await this.plugin.saveSettings();
 					});
-				tx.inputEl.rows = 4;
-			});
+				}),
+		);
+
+		cal(
+			new Setting(containerEl)
+				.setName(t("setDayEnd"))
+				.addDropdown((d) => {
+					endDd = d;
+					for (let h = 1; h <= 24; h++) d.addOption(String(h), hourLabel(h));
+					d.setValue(String(this.plugin.settings.dayEndHour)).onChange(async (v) => {
+						const end = Number(v);
+						this.plugin.settings.dayEndHour = end;
+						if (this.plugin.settings.dayStartHour >= end) {
+							this.plugin.settings.dayStartHour = Math.max(0, end - 1);
+							startDd?.setValue(String(this.plugin.settings.dayStartHour));
+						}
+						await this.plugin.saveSettings();
+					});
+				}),
+		);
+
+		cal(
+			new Setting(containerEl)
+				.setName(t("setLogSection"))
+				.setDesc(t("setLogSectionDesc"))
+				.addText((tx) =>
+					tx
+						.setPlaceholder("Log")
+						.setValue(this.plugin.settings.logSection)
+						.onChange(async (v) => {
+							this.plugin.settings.logSection = v.trim() || "Log";
+							await this.plugin.saveSettings();
+						}),
+				),
+		);
+
+		cal(
+			new Setting(containerEl)
+				.setName(t("setBacklink"))
+				.setDesc(t("setBacklinkDesc"))
+				.addToggle((tg) =>
+					tg.setValue(this.plugin.settings.logBacklink).onChange(async (v) => {
+						this.plugin.settings.logBacklink = v;
+						await this.plugin.saveSettings();
+						backlinkSection.settingEl.toggle(v);
+					}),
+				),
+		);
+
+		// Shown only when back-references are on.
+		const backlinkSection = cal(
+			new Setting(containerEl)
+				.setName(t("setBacklinkSection"))
+				.setDesc(t("setBacklinkSectionDesc"))
+				.addText((tx) =>
+					tx
+						.setPlaceholder("Log")
+						.setValue(this.plugin.settings.logBacklinkSection)
+						.onChange(async (v) => {
+							this.plugin.settings.logBacklinkSection = v.trim() || "Log";
+							await this.plugin.saveSettings();
+						}),
+				),
+		);
+
+		cal(new Setting(containerEl).setName(t("setCategoriesHeading")).setHeading());
+
+		cal(
+			new Setting(containerEl)
+				.setName(t("setEnableCategories"))
+				.setDesc(t("setEnableCategoriesDesc"))
+				.addToggle((tg) =>
+					tg.setValue(this.plugin.settings.categoriesEnabled).onChange(async (v) => {
+						this.plugin.settings.categoriesEnabled = v;
+						await this.plugin.saveSettings();
+						categoryList.settingEl.toggle(v);
+					}),
+				),
+		);
+
+		// Shown only when categories are on.
+		const categoryList = cal(
+			new Setting(containerEl)
+				.setName(t("setCategories"))
+				.setDesc(t("setCategoriesDesc"))
+				.addTextArea((tx) => {
+					tx
+						.setPlaceholder("Dev|blue\nMeeting|rgb(224,164,88)\nBreak|#7bbf6a")
+						.setValue(this.plugin.settings.categoriesText)
+						.onChange(async (v) => {
+							this.plugin.settings.categoriesText = v;
+							await this.plugin.saveSettings();
+						});
+					tx.inputEl.rows = 4;
+				}),
+		);
+
+		// Hide the whole calendar group when its view is off; the two dependent
+		// fields additionally respect their own toggle.
+		const setCalendarVisible = (v: boolean) => {
+			for (const el of calendarEls) el.toggle(v);
+			backlinkSection.settingEl.toggle(v && this.plugin.settings.logBacklink);
+			categoryList.settingEl.toggle(v && this.plugin.settings.categoriesEnabled);
+		};
+		setCalendarVisible(this.plugin.settings.enableCalendar);
 	}
 }

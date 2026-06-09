@@ -1,6 +1,7 @@
 import { type App, Modal, Setting } from "obsidian";
 import type { Category } from "../settings";
 import { formatTime } from "../shared/section-parser";
+import { FileSuggest } from "../shared/file-suggest";
 import { t as tr } from "../i18n.svelte";
 
 export interface LogModalResult {
@@ -56,12 +57,17 @@ export class LogBlockModal extends Modal {
 		new Setting(contentEl)
 			.setName(tr("linkTask"))
 			.setDesc(tr("linkDesc"))
-			.addText((text) =>
+			.addText((text) => {
 				text.setPlaceholder(tr("taskTitlePlaceholder")).onChange((v) => {
 					const val = v.trim();
 					this.result.link = val ? stripBrackets(val) : null;
-				}),
-			);
+				});
+				// Filename autocomplete: filter notes as the user types; picking a
+				// file fills its basename and sets it as the link target.
+				new FileSuggest(this.app, text.inputEl, (file) => {
+					this.result.link = file.basename;
+				});
+			});
 
 		if (this.opts.categories.length > 0) {
 			new Setting(contentEl).setName(tr("category")).addDropdown((d) => {

@@ -160,7 +160,20 @@ export class CalendarView extends ItemView {
 
 		const weekEnd = addDays(this.weekStart, 6);
 		const title = `${fmt(this.weekStart)} – ${fmt(weekEnd)}`;
-		setCalState({ title, days, entries, hourHeight: HOUR_HEIGHT, context: this.context() });
+		// Visible time window (whole hours → minutes), with a safe fallback.
+		const startH = settings.dayStartHour ?? 0;
+		const endH = settings.dayEndHour ?? 24;
+		const dayStartMin = Math.max(0, Math.min(23, startH)) * 60;
+		const dayEndMin = Math.max(startH + 1, Math.min(24, endH)) * 60;
+		setCalState({
+			title,
+			days,
+			entries,
+			hourHeight: HOUR_HEIGHT,
+			dayStartMin,
+			dayEndMin,
+			context: this.context(),
+		});
 	}
 
 	private openEntry(entry: CalEntry): void {

@@ -15,19 +15,34 @@
 			return { entry, col: l.col, cols: l.cols };
 		});
 	}
-	const hours = Array.from({ length: 24 }, (_, i) => i);
+	// Visible window (whole hours), driven by settings; default full day.
+	const startHour = $derived(Math.floor(cal.dayStartMin / 60));
+	const endHour = $derived(Math.ceil(cal.dayEndMin / 60));
+	const numHours = $derived(Math.max(1, endHour - startHour));
+	const hours = $derived(Array.from({ length: numHours }, (_, i) => startHour + i));
+
+	// Fill the viewport: split the available height across the visible hours so a
+	// narrow window (e.g. 08:00–18:00) renders taller cells / bigger blocks. Never
+	// below MIN_HOUR_PX, so a full 24h day still scrolls instead of cramming.
+	const MIN_HOUR_PX = 40;
+	let viewportH = $state(0); // .tm-cal-scroll client height
+	let headH = $state(0); // sticky day-header height
+	const hourHeight = $derived(
+		viewportH > 0 ? Math.max(MIN_HOUR_PX, Math.floor((viewportH - headH) / numHours)) : cal.hourHeight,
+	);
+	const columnHeight = $derived(numHours * hourHeight);
 
 	const SNAP = 15; // minutes
 	function snap(min: number): number {
-		return Math.max(0, Math.min(24 * 60, Math.round(min / SNAP) * SNAP));
+		return Math.max(cal.dayStartMin, Math.min(cal.dayEndMin, Math.round(min / SNAP) * SNAP));
 	}
 
-	// Drag-to-create cal.
+	// Drag-to-create state.
 	let creating = $state<{ dayIndex: number; startMin: number; endMin: number } | null>(null);
 
 	function yToMinutes(clientY: number, columnEl: HTMLElement): number {
-		const rect = columnEl.getBoundingClientRect();
-		return ((clientY - rect.top) / cal.hourHeight) * 60;
+		// Grid origin is the window start, not midnight.
+		return cal.dayStartMin + ((clientY - columnEl.getBoundingClientRect().top) / hourHeight) * 60;
 	}
 
 	function onColumnPointerDown(event: PointerEvent, dayIndex: number) {
@@ -67,8 +82,8 @@
 		<span class="tm-cal-title">{cal.title}</span>
 	</header>
 
-	<div class="tm-cal-scroll">
-		<div class="tm-cal-dayhead">
+	<div class="tm-cal-scroll" bind:clientHeight={viewportH}>
+		<div class="tm-cal-dayhead" bind:clientHeight={headH}>
 			<div class="tm-cal-gutter-head"></div>
 			{#each cal.days as day, i (i)}
 				<div class="tm-cal-daycol-head" class:is-today={day.isToday}>
@@ -81,7 +96,7 @@
 		<div class="tm-cal-body">
 		<div class="tm-cal-gutter">
 			{#each hours as h (h)}
-				<div class="tm-cal-hour" style:height="{cal.hourHeight}px">
+				<div class="tm-cal-hour" style:height="{hourHeight}px">
 					<span class="tm-cal-hour-label">{String(h).padStart(2, "0")}:00</span>
 				</div>
 			{/each}
@@ -91,12 +106,12 @@
 			<div
 				class="tm-cal-daycol"
 				class:is-today={day.isToday}
-				style:height="{24 * cal.hourHeight}px"
+				style:height="{columnHeight}px"
 				role="presentation"
 				onpointerdown={(e) => onColumnPointerDown(e, dayIndex)}
 			>
 				{#each hours as h (h)}
-					<div class="tm-cal-slot" style:height="{cal.hourHeight}px"></div>
+					<div class="tm-cal-slot" style:height="{hourHeight}px"></div>
 				{/each}
 
 				{#each dayBlocks(dayIndex) as b (b.entry.lineIndex)}
@@ -104,7 +119,9 @@
 						entry={b.entry}
 						col={b.col}
 						cols={b.cols}
-						hourHeight={cal.hourHeight}
+						hourHeight={hourHeight}
+						dayStartMin={cal.dayStartMin}
+						dayEndMin={cal.dayEndMin}
 						context={cal.context}
 					/>
 				{/each}
@@ -112,8 +129,8 @@
 				{#if creating && creating.dayIndex === dayIndex}
 					<div
 						class="tm-cal-block is-preview"
-						style:top="{(creating.startMin / 60) * cal.hourHeight}px"
-						style:height="{((creating.endMin - creating.startMin) / 60) * cal.hourHeight}px"
+						style:top="{((creating.startMin - cal.dayStartMin) / 60) * hourHeight}px"
+						style:height="{((creating.endMin - creating.startMin) / 60) * hourHeight}px"
 					></div>
 				{/if}
 			</div>

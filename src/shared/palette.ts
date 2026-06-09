@@ -1,10 +1,9 @@
 /**
  * Theme-friendly soft colours for kanban columns / timeline lanes.
  *
- * Colours are derived from HSL hues at low saturation/high lightness so they
- * read as gentle tints in both light and dark themes (we lean on alpha over a
- * theme background rather than hard-coding light/dark variants). A column either
- * gets a colour by position, or by a named colour carried in a predefined value
+ * Colours use low-saturation/high-lightness HSL hues with alpha over the theme
+ * background, so they read as gentle tints in light and dark themes. A column
+ * gets a colour by position, or by a named colour in a predefined value
  * (`todo|blue`).
  */
 
@@ -55,8 +54,8 @@ export function colorForIndex(index: number): ColumnColor {
 /**
  * Resolve a colour token from a `value|color` predefined entry.
  * Accepts a known colour name (blue, red, …) or any raw CSS colour (#4c8bf5,
- * rgb(...), hsl(...), or a CSS named colour) — the latter via color-mix so we
- * still get a soft background tint plus a solid accent.
+ * rgb(...), hsl(...), CSS named colour) — the latter via color-mix for a soft
+ * tint plus a solid accent.
  */
 export function colorForName(name: string): ColumnColor | null {
 	const raw = name.trim();

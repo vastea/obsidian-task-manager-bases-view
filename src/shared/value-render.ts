@@ -2,8 +2,8 @@ import { type BasesEntry, type BasesPropertyId, type RenderContext } from "obsid
 import { getValue } from "./entry-accessor";
 
 /**
- * Unified Value rendering. We always go through `Value.renderTo` so links,
- * dates, checkboxes etc. render exactly as Bases renders them elsewhere.
+ * Unified Value rendering via `Value.renderTo`, so links, dates, checkboxes etc.
+ * render exactly as Bases renders them elsewhere.
  */
 
 export interface RenderArgs {

@@ -1,9 +1,9 @@
 import { type App, type TFile, type WorkspaceLeaf, Keymap } from "obsidian";
 
 /**
- * Clicking a task opens its file in a right-hand split, keeping "view on the
- * left, detail on the right". We reuse one detail leaf so repeated clicks don't
- * spawn endless splits; mod-click bypasses reuse and opens a new tab/window.
+ * Clicking a task opens its file in a right-hand split ("view on the left,
+ * detail on the right"). One detail leaf is reused so repeated clicks don't
+ * spawn endless splits; mod-click opens a new tab/window instead.
  *
  * There is no custom detail view — the note itself is the detail panel.
  */

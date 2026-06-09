@@ -10,21 +10,34 @@
 		context,
 		col = 0,
 		cols = 1,
-	}: { entry: CalEntry; hourHeight: number; context: CalContext | null; col?: number; cols?: number } =
-		$props();
+		dayStartMin = 0,
+		dayEndMin = 24 * 60,
+	}: {
+		entry: CalEntry;
+		hourHeight: number;
+		context: CalContext | null;
+		col?: number;
+		cols?: number;
+		dayStartMin?: number;
+		dayEndMin?: number;
+	} = $props();
 
 	// Horizontal placement for overlapping blocks (2px outer inset, 2% gutter).
 	const leftPct = $derived((col / cols) * 100);
 	const widthPct = $derived((1 / cols) * 100);
 
 	const SNAP = 15;
-	const DAY_MIN = 24 * 60;
 
 	let dragOffset = $state(0); // minutes, applied during move
 	let resizeDelta = $state(0); // minutes, applied to end during resize
 	let dragging = $state(false);
+	// True once the pointer moves past a small threshold → treat as drag, not
+	// click. Consumed by onClick so a move/resize never opens the journal.
+	let pointerMoved = false;
+	const DRAG_THRESHOLD_PX = 4;
 
-	const top = $derived(((entry.startMinutes + dragOffset) / 60) * hourHeight);
+	// Positions are relative to the visible window's start, not midnight.
+	const top = $derived(((entry.startMinutes + dragOffset - dayStartMin) / 60) * hourHeight);
 	const height = $derived(
 		Math.max(
 			(SNAP / 60) * hourHeight,
@@ -44,10 +57,13 @@
 		event.stopPropagation();
 		event.preventDefault();
 		dragging = true;
+		pointerMoved = false;
 		const startY = event.clientY;
 		const onMove = (e: PointerEvent) => {
+			if (Math.abs(e.clientY - startY) > DRAG_THRESHOLD_PX) pointerMoved = true;
 			const deltaMin = snap(((e.clientY - startY) / hourHeight) * 60);
-			const clamped = Math.max(-entry.startMinutes, Math.min(DAY_MIN - entry.endMinutes, deltaMin));
+			// Keep the whole block inside the visible window.
+			const clamped = Math.max(dayStartMin - entry.startMinutes, Math.min(dayEndMin - entry.endMinutes, deltaMin));
 			dragOffset = clamped;
 		};
 		const onUp = () => {
@@ -68,10 +84,12 @@
 		event.stopPropagation();
 		event.preventDefault();
 		dragging = true;
+		pointerMoved = false;
 		const startY = event.clientY;
 		const onMove = (e: PointerEvent) => {
+			if (Math.abs(e.clientY - startY) > DRAG_THRESHOLD_PX) pointerMoved = true;
 			const deltaMin = snap(((e.clientY - startY) / hourHeight) * 60);
-			resizeDelta = Math.max(SNAP - (entry.endMinutes - entry.startMinutes), Math.min(DAY_MIN - entry.endMinutes, deltaMin));
+			resizeDelta = Math.max(SNAP - (entry.endMinutes - entry.startMinutes), Math.min(dayEndMin - entry.endMinutes, deltaMin));
 		};
 		const onUp = () => {
 			window.removeEventListener("pointermove", onMove);
@@ -87,7 +105,12 @@
 	}
 
 	function onClick(event: MouseEvent) {
-		if (dragOffset !== 0 || resizeDelta !== 0) return;
+		// Suppress the click that trails a move/resize drag; only a real single
+		// click opens the journal at the log line.
+		if (pointerMoved) {
+			pointerMoved = false;
+			return;
+		}
 		event.stopPropagation();
 		context?.openEntry(entry);
 	}

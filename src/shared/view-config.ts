@@ -3,7 +3,7 @@ import { type BasesViewConfig } from "obsidian";
 /**
  * View-local state lives in the Bases view config (physically inside the
  * `.base` file), never in plugin.saveData — a single global blob can't tell
- * multiple boards apart. We only persist what the user explicitly changed.
+ * multiple boards apart. Only user-changed values are persisted.
  */
 
 export const EMPTY_SENTINEL = "__tm_empty__";

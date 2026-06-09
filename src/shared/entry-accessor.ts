@@ -3,11 +3,10 @@ import { type App, type BasesEntry, type BasesPropertyId, type Value, parsePrope
 /**
  * Safe reads from a BasesEntry / its backing frontmatter.
  *
- * Rule of thumb: rendering goes through `Value` (so Bases formatting applies),
- * but anything we need as a concrete JS value (dates for the timeline, the raw
- * group key for bucketing) is read off the file frontmatter, which is stable
- * and unambiguous. The plugin never hard-codes property names — callers pass
- * the BasesPropertyId the user chose in the view options.
+ * Rendering goes through `Value` (so Bases formatting applies); concrete JS
+ * values (timeline dates, the raw group key) are read off the file frontmatter,
+ * which is stable and unambiguous. Property names are never hard-coded — callers
+ * pass the BasesPropertyId chosen in the view options.
  */
 
 export function getValue(entry: BasesEntry, propId: BasesPropertyId): Value | null {
@@ -35,9 +34,9 @@ export function getRawFrontmatter(app: App, entry: BasesEntry, propId: BasesProp
 }
 
 /**
- * Bucket key used to group an entry by a property. We read the raw frontmatter
- * value (not the rendered Value) so the comparison against user-supplied
- * predefined column values is exact.
+ * Bucket key for grouping an entry by a property. Reads the raw frontmatter
+ * value (not the rendered Value) so comparison against predefined column values
+ * is exact.
  */
 export function getGroupKey(app: App, entry: BasesEntry, propId: BasesPropertyId): string | null {
 	const raw = getRawFrontmatter(app, entry, propId);

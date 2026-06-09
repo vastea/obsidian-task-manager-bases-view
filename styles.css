@@ -64,10 +64,14 @@
 	font-size: var(--font-ui-small);
 	color: var(--text-normal);
 	white-space: nowrap;
-	/* Promote to its own layer + integer transform to avoid half-pixel blur
-	   from flex centring of the narrow vertical text. */
-	transform: translateZ(0);
-	backface-visibility: hidden;
+	/* The collapsed column is 40px wide. Pin the text box to an even cross-size
+	   (width + matching line-height) so flex centring lands on a whole pixel
+	   ((40-24)/2 = 8px) — a fractional offset blurs the already-sideways glyphs.
+	   No transform/translateZ: forcing a GPU layer rasterizes the text into a
+	   scaled bitmap and makes it worse. */
+	width: 24px;
+	line-height: 24px;
+	text-align: center;
 }
 
 /* ---- Header (expanded): heading left, actions right ---- */
@@ -526,6 +530,8 @@
 	position: relative;
 	border-left: 1px solid var(--background-modifier-border);
 	box-sizing: border-box;
+	/* Clip blocks that fall outside the visible time window. */
+	overflow: hidden;
 }
 .tm-cal-daycol.is-today {
 	background: var(--background-modifier-hover);
@@ -587,6 +593,12 @@
 	margin-bottom: var(--size-4-3);
 	color: var(--text-muted);
 	font-weight: var(--font-semibold);
+}
+
+/* Filename autocomplete (LinkTask) */
+.tm-file-suggest-path {
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
 }
 
 /* Settings */

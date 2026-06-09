@@ -21,6 +21,12 @@ const dict = {
 	// --- Kanban ---
 	newItem: { en: "New item", zh: "新建工作项" },
 	archiveAll: { en: "Archive all in column", zh: "归档本列全部任务" },
+	archiveAllTitle: { en: "Archive all tasks", zh: "归档全部任务" },
+	archiveAllConfirm: {
+		en: "Archive every task in this column?",
+		zh: "确定归档本列的全部任务吗？",
+	},
+	confirm: { en: "Confirm", zh: "确认" },
 	moveTo: { en: "Move to", zh: "移动到" },
 	clearGroup: { en: "Clear group", zh: "清除分组" },
 	archive: { en: "Archive", zh: "归档" },
@@ -120,6 +126,12 @@ const dict = {
 	setFirstDay: { en: "First day of week", zh: "每周起始日" },
 	setMonday: { en: "Monday", zh: "周一" },
 	setSunday: { en: "Sunday", zh: "周日" },
+	setDayStart: { en: "Day starts at", zh: "一天开始于" },
+	setDayEnd: { en: "Day ends at", zh: "一天结束于" },
+	setDayWindowDesc: {
+		en: "Only this hour range is shown in the weekly grid. Narrow it (e.g. 08:00–18:00) to focus on working hours.",
+		zh: "周历网格只显示这个时间段。把它收窄（如 08:00–18:00）可聚焦在工作时段。",
+	},
 	setLogSection: { en: "Log section heading", zh: "日志章节标题" },
 	setLogSectionDesc: {
 		en: "Heading whose list items are read as time blocks.",

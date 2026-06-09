@@ -35,10 +35,21 @@ export interface CalState {
 	days: CalDay[];
 	entries: CalEntry[];
 	hourHeight: number;
+	/** Visible window, in minutes from midnight (default 0..1440). */
+	dayStartMin: number;
+	dayEndMin: number;
 	context: CalContext | null;
 }
 
-let state = $state<CalState>({ title: "", days: [], entries: [], hourHeight: 40, context: null });
+let state = $state<CalState>({
+	title: "",
+	days: [],
+	entries: [],
+	hourHeight: 40,
+	dayStartMin: 0,
+	dayEndMin: 24 * 60,
+	context: null,
+});
 
 export function getCalState(): CalState {
 	return state;
