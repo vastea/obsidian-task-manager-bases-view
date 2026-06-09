@@ -235,11 +235,13 @@
 	color: var(--text-muted);
 }
 
-/* Render all property values inline (no chips/boxes — dates included). */
-.tm-card-prop * {
-	background-color: transparent !important;
-	border-color: transparent !important;
-	box-shadow: none !important;
+/* Render all property values inline (no chips/boxes — dates included).
+   The doubled class raises specificity enough to override Bases' value chips
+   without !important. */
+.tm-card-prop.tm-card-prop * {
+	background-color: transparent;
+	border-color: transparent;
+	box-shadow: none;
 }
 .tm-card-prop {
 	display: inline-flex;

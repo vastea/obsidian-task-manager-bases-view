@@ -6,6 +6,17 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-06-09
+
+### Fixed
+- Declared `minAppVersion` raised to `1.10.2` to match the `createFileForView`
+  API used by the kanban view (community-plugin validation).
+- Replaced the deprecated `ButtonComponent.setWarning()` with the `mod-warning`
+  class in the confirmation dialog.
+- Removed `!important` from card-property styles (raised selector specificity
+  instead) and tightened a couple of `any`-typed reads.
+- Release workflow now attaches build-provenance attestations to the assets.
+
 ## [0.2.0] - 2026-06-09
 
 ### Added
@@ -51,6 +62,7 @@ Initial release.
   back-references.
 - English / 中文 localisation, switchable in settings.
 
-[Unreleased]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.2.0...HEAD
+[Unreleased]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.2.1...HEAD
+[0.2.1]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.2.0...0.2.1
 [0.2.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.1.0...0.2.0
 [0.1.0]: https://github.com/vastea/obsidian-task-manager-bases-view/releases/tag/0.1.0
