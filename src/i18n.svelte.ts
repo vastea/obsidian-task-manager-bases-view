@@ -49,6 +49,7 @@ const dict = {
 	openInJournal: { en: "Open in journal", zh: "在日记中打开" },
 	deleteBlock: { en: "Delete block", zh: "删除时间块" },
 	newLogBlock: { en: "New log block", zh: "新建时间块" },
+	time: { en: "Time", zh: "时间" },
 	description: { en: "Description", zh: "描述" },
 	descPlaceholder: { en: "What did you do?", zh: "做了什么？" },
 	linkTask: { en: "Link task", zh: "关联任务" },
@@ -64,6 +65,7 @@ const dict = {
 	today: { en: "Today", zh: "今天" },
 	prevWeek: { en: "Previous week", zh: "上一周" },
 	nextWeek: { en: "Next week", zh: "下一周" },
+	jumpToDate: { en: "Jump to date", zh: "跳转到日期" },
 	openWeeklyLog: { en: "Open weekly log", zh: "打开周历日志" },
 
 	// --- Notices ---

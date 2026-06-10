@@ -5,6 +5,8 @@ import { FileSuggest } from "../shared/file-suggest";
 import { t as tr } from "../i18n.svelte";
 
 export interface LogModalResult {
+	startMinutes: number;
+	endMinutes: number;
 	note: string;
 	link: string | null;
 	category: string | null;
@@ -21,24 +23,58 @@ function stripBrackets(s: string): string {
 	return s.replace(/^\[\[/, "").replace(/\]\]$/, "").trim();
 }
 
+/** Parse an "HH:MM" value (from a native time input) into minutes, or null. */
+function parseTime(v: string): number | null {
+	const m = /^(\d{1,2}):(\d{2})$/.exec(v.trim());
+	if (!m) return null;
+	const h = Number(m[1]);
+	const min = Number(m[2]);
+	if (h > 23 || min > 59) return null;
+	return h * 60 + min;
+}
+
 /** Modal for creating a calendar log block: description + optional link + category. */
 export class LogBlockModal extends Modal {
 	private opts: LogModalOptions;
-	private result: LogModalResult = { note: "", link: null, category: null };
+	private result: LogModalResult;
 	private submitted = false;
 
 	constructor(app: App, opts: LogModalOptions) {
 		super(app);
 		this.opts = opts;
+		// Pre-fill with the dragged time; the user can adjust it (drag isn't exact)
+		// but doesn't have to.
+		this.result = {
+			startMinutes: opts.startMinutes,
+			endMinutes: opts.endMinutes,
+			note: "",
+			link: null,
+			category: null,
+		};
 	}
 
 	onOpen(): void {
 		const { contentEl } = this;
 		contentEl.addClass("tm-log-modal");
 		contentEl.createEl("h3", { text: tr("newLogBlock") });
-		contentEl.createEl("div", {
-			cls: "tm-log-modal-time",
-			text: `${formatTime(this.opts.startMinutes)} – ${formatTime(this.opts.endMinutes)}`,
+
+		// Editable start/end time, pre-filled from the drag. Native time inputs
+		// use 24h "HH:MM" values regardless of display locale.
+		new Setting(contentEl).setName(tr("time")).then((setting) => {
+			setting.controlEl.addClass("tm-log-modal-times");
+			const start = setting.controlEl.createEl("input", { type: "time" });
+			start.value = formatTime(this.result.startMinutes);
+			setting.controlEl.createSpan({ cls: "tm-log-modal-times-sep", text: "–" });
+			const end = setting.controlEl.createEl("input", { type: "time" });
+			end.value = formatTime(this.result.endMinutes);
+			start.addEventListener("change", () => {
+				const m = parseTime(start.value);
+				if (m !== null) this.result.startMinutes = m;
+			});
+			end.addEventListener("change", () => {
+				const m = parseTime(end.value);
+				if (m !== null) this.result.endMinutes = m;
+			});
 		});
 
 		new Setting(contentEl).setName(tr("description")).addText((text) => {
@@ -92,6 +128,12 @@ export class LogBlockModal extends Modal {
 
 	onClose(): void {
 		this.contentEl.empty();
-		if (this.submitted) this.opts.onSubmit(this.result);
+		if (this.submitted) {
+			// Guard against an inverted/zero range after manual editing.
+			if (this.result.endMinutes <= this.result.startMinutes) {
+				this.result.endMinutes = Math.min(24 * 60, this.result.startMinutes + 15);
+			}
+			this.opts.onSubmit(this.result);
+		}
 	}
 }

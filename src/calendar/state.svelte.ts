@@ -28,6 +28,8 @@ export interface CalContext {
 	gotoPrev: () => void;
 	gotoNext: () => void;
 	gotoToday: () => void;
+	/** Jump the grid to the week containing an arbitrary date. */
+	gotoDate: (date: Date) => void;
 }
 
 export interface CalState {
@@ -38,6 +40,10 @@ export interface CalState {
 	/** Visible window, in minutes from midnight (default 0..1440). */
 	dayStartMin: number;
 	dayEndMin: number;
+	/** Current local time, minutes from midnight; for the now-indicator line. */
+	nowMinutes: number;
+	/** Index into `days` that is today, or -1 when this week has no today. */
+	todayIndex: number;
 	context: CalContext | null;
 }
 
@@ -48,6 +54,8 @@ let state = $state<CalState>({
 	hourHeight: 40,
 	dayStartMin: 0,
 	dayEndMin: 24 * 60,
+	nowMinutes: 0,
+	todayIndex: -1,
 	context: null,
 });
 
