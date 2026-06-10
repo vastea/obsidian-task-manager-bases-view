@@ -1,7 +1,7 @@
 import { type WorkspaceLeaf, ItemView, debounce } from "obsidian";
 import { mount, unmount } from "svelte";
 import WeekGrid from "./WeekGrid.svelte";
-import { type CalContext, type CalDay, type CalEntry, setCalState } from "./state.svelte";
+import { type CalContext, type CalDay, type CalEntry, getCalState, setCalState } from "./state.svelte";
 import { dailyNotePath, deleteLogLine, insertLog, readDayEntries, updateLogTime } from "./log-io";
 import { LogBlockModal } from "./log-modal";
 import { type Category, parseCategories } from "../settings";
@@ -56,6 +56,9 @@ export class CalendarView extends ItemView {
 		this.registerEvent(this.app.vault.on("create", this.refreshDebounced));
 		this.registerEvent(this.app.vault.on("delete", this.refreshDebounced));
 		this.registerEvent(this.app.vault.on("rename", this.refreshDebounced));
+
+		// Advance the now-indicator line once a minute (cleaned up on unload).
+		this.registerInterval(window.setInterval(() => this.updateNow(), 60000));
 
 		await this.refresh();
 	}
@@ -126,7 +129,23 @@ export class CalendarView extends ItemView {
 				this.weekStart = this.computeWeekStart(new Date());
 				void this.refresh();
 			},
+			gotoDate: (date) => {
+				this.weekStart = this.computeWeekStart(date);
+				void this.refresh();
+			},
 		};
+	}
+
+	/**
+	 * Recompute just the now-indicator position (minute tick) without rescanning
+	 * notes; merge it into the existing state so the line advances live.
+	 */
+	private updateNow(): void {
+		const s = getCalState();
+		const now = new Date();
+		const nowMinutes = now.getHours() * 60 + now.getMinutes();
+		const todayIndex = s.days.findIndex((d) => d.isToday);
+		setCalState({ ...s, nowMinutes, todayIndex });
 	}
 
 	private async refresh(): Promise<void> {
@@ -165,6 +184,9 @@ export class CalendarView extends ItemView {
 		const endH = settings.dayEndHour ?? 24;
 		const dayStartMin = Math.max(0, Math.min(23, startH)) * 60;
 		const dayEndMin = Math.max(startH + 1, Math.min(24, endH)) * 60;
+		const now = new Date();
+		const nowMinutes = now.getHours() * 60 + now.getMinutes();
+		const todayIndex = days.findIndex((d) => d.isToday);
 		setCalState({
 			title,
 			days,
@@ -172,6 +194,8 @@ export class CalendarView extends ItemView {
 			hourHeight: HOUR_HEIGHT,
 			dayStartMin,
 			dayEndMin,
+			nowMinutes,
+			todayIndex,
 			context: this.context(),
 		});
 	}
@@ -193,7 +217,7 @@ export class CalendarView extends ItemView {
 			categories: this.categories(),
 			onSubmit: (result) => {
 				void (async () => {
-					await insertLog(this.app, date, this.plugin.settings, start, end, {
+					await insertLog(this.app, date, this.plugin.settings, result.startMinutes, result.endMinutes, {
 						link: result.link,
 						note: result.note,
 						category: result.category,

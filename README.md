@@ -45,7 +45,9 @@ The plugin is a thin renderer: change frontmatter / Bases config / drag → Base
   - 16:00-16:30
   ```
   Format: `HH:MM-HH:MM` → optional `(Category)` → optional `[[wikilink]]` → optional note.
-- **Overlapping blocks** render side‑by‑side. **Drag** (up or down) on empty grid to create a block via a modal (description + optional `[[task]]` link + category). **Right‑click** a block to delete it. Click opens that day's journal at the log line.
+- **Overlapping blocks** render side‑by‑side. **Drag** (up or down) on empty grid to create a block via a modal — its **start/end time is editable** (pre‑filled from the drag, so an imprecise drag can be corrected) alongside description + optional `[[task]]` link + category. **Right‑click** a block to delete it. Click opens that day's journal at the log line.
+- **Current‑time indicator**: a now‑line is drawn across today's column, updating every minute (hidden when the week has no today or now is outside the day window).
+- **Jump to date**: click the toolbar title to open a date picker and jump to any week (respects the week‑start setting).
 - **Categories / colours**: optional, enabled in settings. Define `name|color` (a colour name, hex, or `rgb(...)`), or put the colour **inline** in the line — `(Dev|blue)` — exactly like the kanban `value|color` scheme.
 - **Back‑reference** (optional): when a block links a task, append a dated record under a heading inside that task's note.
 - **Custom day window** (settings): default `00:00–24:00`, but narrow it (e.g. `09:00–18:00`) to focus on working hours — the grid then splits the visible hours to fill the height, so blocks render larger.

@@ -2,9 +2,28 @@
 	import { getCalState } from "./state.svelte";
 	import { layoutDay } from "./layout";
 	import { t, weekdayShort } from "../i18n.svelte";
+	import { formatISODate } from "../shared/date-util";
 	import LogBlock from "./LogBlock.svelte";
 
 	const cal = $derived(getCalState());
+
+	// Jump-to-date: a native date input revealed by clicking the title.
+	let dateInput = $state<HTMLInputElement | null>(null);
+	// ISO value seeding the picker — the visible week's first day.
+	const pickerValue = $derived(cal.days[0] ? formatISODate(cal.days[0].date) : "");
+
+	function openDatePicker() {
+		dateInput?.showPicker();
+	}
+
+	function onDatePicked(event: Event) {
+		const value = (event.currentTarget as HTMLInputElement).value;
+		if (!value) return;
+		const [y, m, d] = value.split("-").map(Number);
+		if (!y || !m || !d) return;
+		// Parse as a local date (avoid the UTC shift of `new Date("YYYY-MM-DD")`).
+		cal.context?.gotoDate(new Date(y, m - 1, d));
+	}
 
 	// Entries for a day, each annotated with its overlap column / column count.
 	function dayBlocks(dayIndex: number) {
@@ -25,10 +44,17 @@
 	// narrow window (e.g. 08:00–18:00) renders taller cells / bigger blocks. Never
 	// below MIN_HOUR_PX, so a full 24h day still scrolls instead of cramming.
 	const MIN_HOUR_PX = 40;
+	// Bottom padding on the grid body holds the trailing end-time label, which
+	// sits below the final hour line. No top padding — the first line is flush
+	// under the header. Keep PAD_BOTTOM in sync with `.tm-cal-body` in styles.css.
+	const PAD_TOP = 0;
+	const PAD_BOTTOM = 20;
 	let viewportH = $state(0); // .tm-cal-scroll client height
 	let headH = $state(0); // sticky day-header height
 	const hourHeight = $derived(
-		viewportH > 0 ? Math.max(MIN_HOUR_PX, Math.floor((viewportH - headH) / numHours)) : cal.hourHeight,
+		viewportH > 0
+			? Math.max(MIN_HOUR_PX, Math.floor((viewportH - headH - PAD_TOP - PAD_BOTTOM) / numHours))
+			: cal.hourHeight,
 	);
 	const columnHeight = $derived(numHours * hourHeight);
 
@@ -79,7 +105,19 @@
 			<button onclick={() => cal.context?.gotoToday()}>{t("today")}</button>
 			<button onclick={() => cal.context?.gotoNext()} aria-label={t("nextWeek")}>›</button>
 		</div>
-		<span class="tm-cal-title">{cal.title}</span>
+		<div class="tm-cal-jump">
+			<button class="tm-cal-title" onclick={openDatePicker} aria-label={t("jumpToDate")} title={t("jumpToDate")}>
+				{cal.title}
+			</button>
+			<input
+				class="tm-cal-date-input"
+				type="date"
+				bind:this={dateInput}
+				value={pickerValue}
+				aria-label={t("jumpToDate")}
+				onchange={onDatePicked}
+			/>
+		</div>
 	</header>
 
 	<div class="tm-cal-scroll" bind:clientHeight={viewportH}>
@@ -100,6 +138,10 @@
 					<span class="tm-cal-hour-label">{String(h).padStart(2, "0")}:00</span>
 				</div>
 			{/each}
+			<!-- Closing boundary label so the axis reads start → end. -->
+			<div class="tm-cal-hour tm-cal-hour-end">
+				<span class="tm-cal-hour-label">{String(endHour).padStart(2, "0")}:00</span>
+			</div>
 		</div>
 
 		{#each cal.days as day, dayIndex (dayIndex)}
@@ -133,8 +175,19 @@
 						style:height="{((creating.endMin - creating.startMin) / 60) * hourHeight}px"
 					></div>
 				{/if}
+
+				{#if cal.todayIndex === dayIndex && cal.nowMinutes >= cal.dayStartMin && cal.nowMinutes <= cal.dayEndMin}
+					<div
+						class="tm-cal-now"
+						style:top="{((cal.nowMinutes - cal.dayStartMin) / 60) * hourHeight}px"
+					></div>
+				{/if}
 			</div>
 		{/each}
+
+		<!-- Single full-width closing line so the gutter and the day columns share
+		     the exact same bottom boundary (no per-side 1px border mismatch). -->
+		<div class="tm-cal-closeline" style:top="{columnHeight}px"></div>
 		</div>
 	</div>
 </div>

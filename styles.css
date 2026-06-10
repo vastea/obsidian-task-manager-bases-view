@@ -470,8 +470,36 @@
 	display: flex;
 	gap: var(--size-4-1);
 }
-.tm-cal-title {
+/* Clickable title that doubles as the jump-to-date trigger. */
+.tm-cal-jump {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+button.tm-cal-title {
+	background: transparent;
+	border: none;
+	box-shadow: none;
+	cursor: pointer;
 	font-weight: var(--font-semibold);
+	color: var(--text-normal);
+	padding: var(--size-4-1) var(--size-4-2);
+	border-radius: var(--radius-s);
+}
+button.tm-cal-title:hover {
+	background: var(--background-modifier-hover);
+}
+/* Native date input kept out of view; opened via title.showPicker(). */
+.tm-cal-date-input {
+	position: absolute;
+	left: var(--size-4-2);
+	bottom: 0;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	border: none;
+	opacity: 0;
+	pointer-events: none;
 }
 
 /* Shared vertical scroll for header + body so the day columns line up
@@ -488,7 +516,8 @@
 	top: 0;
 	z-index: 5;
 	background: var(--background-primary);
-	border-bottom: 1px solid var(--background-modifier-border);
+	/* No bottom border: the grid's first hour line (08:00) sits just below and
+	   serves as the divider, so a border here would read as a double line. */
 }
 .tm-cal-gutter-head {
 	flex: 0 0 56px;
@@ -509,6 +538,21 @@
 
 .tm-cal-body {
 	display: flex;
+	position: relative; /* anchor for the absolute closing line */
+	/* No top gap: the first hour line sits flush under the header. Bottom space
+	   holds the trailing end-time label, which sits BELOW the final line.
+	   Keep PAD_BOTTOM in sync with WeekGrid.svelte. */
+	padding-bottom: 20px;
+}
+/* Full-width final hour line, spanning gutter + columns as one element so both
+   sides share the exact same bottom boundary. */
+.tm-cal-closeline {
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: 0;
+	border-top: 1px solid var(--background-modifier-border-hover);
+	pointer-events: none;
 }
 
 .tm-cal-gutter {
@@ -516,15 +560,26 @@
 }
 .tm-cal-hour {
 	position: relative;
-	border-bottom: 1px solid var(--background-modifier-border-hover);
+	/* Line on the TOP edge so every hour label (top: -7px) sits centred on its
+	   own line — including the first hour. The closing line is drawn by
+	   `.tm-cal-hour-end` / the day column's bottom border. */
+	border-top: 1px solid var(--background-modifier-border-hover);
 	box-sizing: border-box;
 }
 .tm-cal-hour-label {
 	position: absolute;
-	top: -7px;
+	/* Sit just BELOW the hour line (which is each cell's top border), so every
+	   label — first to last — reads consistently as "the line, then its time". */
+	top: 2px;
 	right: var(--size-4-1);
 	font-size: var(--font-ui-smaller);
 	color: var(--text-faint);
+}
+/* Zero-height closing-boundary marker: carries only the end-time label; the
+   line itself is the full-width `.tm-cal-closeline`. */
+.tm-cal-hour-end {
+	height: 0;
+	border-top: none;
 }
 
 .tm-cal-daycol {
@@ -539,7 +594,7 @@
 	background: var(--background-modifier-hover);
 }
 .tm-cal-slot {
-	border-bottom: 1px solid var(--background-modifier-border-hover);
+	border-top: 1px solid var(--background-modifier-border-hover);
 	box-sizing: border-box;
 }
 
@@ -548,39 +603,63 @@
 	left: 2px;
 	right: 2px;
 	z-index: 1;
+	min-height: 14px; /* very short blocks still show one line of time */
 	background: var(--interactive-accent);
 	border: 1px solid var(--background-primary);
 	color: var(--text-on-accent);
 	border-radius: var(--radius-s);
 	padding: 2px var(--size-4-1);
 	font-size: var(--font-ui-smaller);
+	line-height: 1.25;
 	overflow: hidden;
 	cursor: grab;
 	box-sizing: border-box;
 	display: flex;
 	flex-direction: column;
 	gap: 1px;
+	transition: box-shadow 80ms ease-in-out, filter 80ms ease-in-out;
 }
 .tm-cal-block.has-color {
 	background: var(--tm-block-color);
 	border-color: var(--background-primary);
 }
-.tm-cal-block.is-dragging { opacity: 0.7; cursor: grabbing; }
+/* Subtle hover affordance (no layout shift). */
+.tm-cal-block:hover {
+	box-shadow: 0 0 0 1px var(--background-modifier-border-hover), var(--shadow-s);
+	filter: brightness(1.06);
+}
+.tm-cal-block.is-dragging { opacity: 0.7; cursor: grabbing; filter: none; }
 .tm-cal-block-cat {
 	align-self: flex-start;
+	max-width: 100%;
 	padding: 0 4px;
 	border-radius: var(--radius-s);
 	background: rgba(255, 255, 255, 0.25);
 	font-size: var(--font-ui-smaller);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 .tm-cal-block.is-preview {
 	background: var(--interactive-accent);
 	opacity: 0.4;
 	pointer-events: none;
 }
-.tm-cal-block-time { font-weight: var(--font-semibold); }
-.tm-cal-block-link { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tm-cal-block-note { color: var(--text-on-accent); opacity: 0.85; }
+/* Time is muted/secondary; the title (link/note) is the prominent line. */
+.tm-cal-block-time { opacity: 0.85; font-size: var(--font-smallest); }
+.tm-cal-block-link {
+	font-weight: var(--font-semibold);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.tm-cal-block-note {
+	color: var(--text-on-accent);
+	opacity: 0.85;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
 .tm-cal-block-resize {
 	position: absolute;
 	left: 0;
@@ -590,11 +669,64 @@
 	cursor: ns-resize;
 }
 
-/* Log block modal */
-.tm-log-modal-time {
-	margin-bottom: var(--size-4-3);
+/* Current-time indicator (now-line) drawn across today's column. */
+.tm-cal-now {
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: 2px;
+	background: var(--color-red);
+	z-index: 3;
+	pointer-events: none;
+}
+.tm-cal-now::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: -3px;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--color-red);
+}
+
+/* Log block modal: editable start/end time inputs. */
+.tm-log-modal-times {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+}
+.tm-log-modal-times-sep {
 	color: var(--text-muted);
-	font-weight: var(--font-semibold);
+}
+/* Match Obsidian's form-field look (native time inputs render unstyled). */
+.tm-log-modal-times input[type="time"] {
+	font-family: inherit;
+	font-size: var(--font-ui-small);
+	color: var(--text-normal);
+	background: var(--background-modifier-form-field);
+	border: var(--input-border-width, 1px) solid var(--background-modifier-border);
+	border-radius: var(--input-radius, var(--radius-s));
+	padding: var(--size-4-1) var(--size-4-2);
+	box-shadow: var(--input-shadow, none);
+	transition: border-color 80ms ease-in-out, box-shadow 80ms ease-in-out;
+}
+.tm-log-modal-times input[type="time"]:hover {
+	border-color: var(--background-modifier-border-hover);
+}
+.tm-log-modal-times input[type="time"]:focus {
+	border-color: var(--background-modifier-border-focus);
+	box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+	outline: none;
+}
+/* The clock spinner inherits the text colour so it reads in dark themes. */
+.tm-log-modal-times input[type="time"]::-webkit-calendar-picker-indicator {
+	cursor: pointer;
+	opacity: 0.6;
+	filter: var(--tm-time-icon-filter, none);
+}
+.theme-dark .tm-log-modal-times input[type="time"]::-webkit-calendar-picker-indicator {
+	filter: invert(1);
 }
 
 /* Filename autocomplete (LinkTask) */

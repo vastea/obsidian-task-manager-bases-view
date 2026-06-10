@@ -159,11 +159,17 @@ function insertLineIntoSection(text: string, sectionName: string, line: string):
 		while (insertAt > range.bodyStart && (lines[insertAt - 1] ?? "").trim() === "") {
 			insertAt--;
 		}
-		lines.splice(insertAt, 0, line);
+		if (insertAt === range.bodyStart) {
+			// First record in the section → keep a blank line under the heading
+			// (so the first entry isn't flush against the heading).
+			lines.splice(insertAt, 0, "", line);
+		} else {
+			lines.splice(insertAt, 0, line);
+		}
 		return lines.join("\n");
 	}
-	// No section: append heading + line at end of file.
+	// No section: append heading + blank line + line at end of file.
 	const trimmed = text.replace(/\s*$/, "");
 	const prefix = trimmed.length > 0 ? `${trimmed}\n\n` : "";
-	return `${prefix}## ${sectionName}\n${line}\n`;
+	return `${prefix}## ${sectionName}\n\n${line}\n`;
 }

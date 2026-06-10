@@ -6,6 +6,32 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-10
+
+Weekly-log calendar polish. Presentation-layer only — no data model, field
+conventions, or new dependencies; everything stays local wall-clock time.
+
+### Added
+- **Calendar — current-time indicator.** A red now-line is drawn across today's
+  column at the local time, updating every minute. It is hidden when the visible
+  week has no today or when now falls outside the configured day window.
+- **Calendar — jump to date.** Click the toolbar title to reveal a native date
+  picker and jump the grid to the week containing any date (respects the
+  Monday/Sunday week-start setting).
+- **Calendar — editable block time.** The new-block modal now shows editable
+  start/end time inputs pre-filled from the drag, so an imprecise drag can be
+  corrected before creating (confirmation optional).
+
+### Changed
+- **Calendar — time-block card polish.** Consistent radius/padding, a muted time
+  line with a prominent title, a category chip, single-line ellipsis for long
+  titles, and a subtle hover highlight. Drag/click behaviour is unchanged.
+- **Calendar — hour-axis alignment.** Every hour label sits consistently just
+  below its gridline (first to last), the grid is flush under the header, and a
+  single full-width closing line keeps the gutter and day columns aligned.
+- **Calendar — log spacing.** A blank line is kept between the section heading and
+  the first record when writing the daily log and the task back-reference.
+
 ## [0.2.1] - 2026-06-09
 
 ### Fixed
@@ -62,7 +88,8 @@ Initial release.
   back-references.
 - English / 中文 localisation, switchable in settings.
 
-[Unreleased]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.2.1...HEAD
+[Unreleased]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.3.0...HEAD
+[0.3.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.2.1...0.3.0
 [0.2.1]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.2.0...0.2.1
 [0.2.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.1.0...0.2.0
 [0.1.0]: https://github.com/vastea/obsidian-task-manager-bases-view/releases/tag/0.1.0
