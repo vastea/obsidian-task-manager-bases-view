@@ -6,6 +6,21 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-06-11
+
+### Fixed
+- **Kanban — card property readability.** Each property now shows its name as
+  `name: value` (friendly name from the Base config), one property per line.
+  Bases-rendered values (dates, links) are flattened to the same font-size and
+  line-height as text rows, so rows are evenly spaced instead of dates standing
+  out taller.
+- Internal: avoid an unsafe `any` when normalising the status value for the
+  changelog entry.
+
+### Changed
+- **Kanban — card styling.** Added a divider between the card title and its
+  properties; the card corner radius now matches the column (`--radius-m`).
+
 ## [0.4.0] - 2026-06-11
 
 ### Added
@@ -106,7 +121,8 @@ Initial release.
   back-references.
 - English / 中文 localisation, switchable in settings.
 
-[Unreleased]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.4.0...HEAD
+[Unreleased]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.4.1...HEAD
+[0.4.1]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.4.0...0.4.1
 [0.4.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.2.1...0.3.0
 [0.2.1]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.2.0...0.2.1
