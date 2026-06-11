@@ -24,6 +24,7 @@ The plugin is a thin renderer: change frontmatter / Bases config / drag → Base
 - **Done columns**: `doneStatuses` marks which column values count as done; that column gets an **Archive‑all** button to archive every card in one click.
 - **Drag** a card between columns to rewrite its group property (only writable `note.*` properties). Click opens the note in a reused right split; mod‑click opens a new tab. Dragging never triggers a click‑open.
 - **Right‑click** a card → move to any column, or **Archive** (writes the configured archive value).
+- **Record changelog** (view option, off by default): when on, moving a card appends a `- yyyy-MM-dd old->new` list item under a configurable body section (**Changelog section heading**, default `Changelog`), creating the section if absent — so each note keeps a history of its status changes. Unchanged moves write nothing.
 - Plane‑style columns: full height, header with title + count on the left and add / collapse on the right, columns collapse to a vertical bar, soft per‑column tint, in‑flow “new item” button.
 
 ![Kanban board with predefined columns (backlog / todo / doing / review / done), each softly tinted; the done column shows an archive‑all action and the empty Uncategorized column is collapsed to a vertical bar on the right](docs/images/kanban-1.png)
