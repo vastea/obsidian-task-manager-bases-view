@@ -81,7 +81,10 @@
 			{#each context.properties as propId (propId)}
 				{@const value = entry.getValue(propId as BasesPropertyId)}
 				{#if value && value.isTruthy()}
-					<span class="tm-card-prop" use:renderValue={{ entry, propId, ctx: context.renderContext }}></span>
+					<span class="tm-card-prop">
+						<span class="tm-card-prop-name">{context.propertyLabel(propId as BasesPropertyId)}:</span>
+						<span class="tm-card-prop-value" use:renderValue={{ entry, propId, ctx: context.renderContext }}></span>
+					</span>
 				{/if}
 			{/each}
 		</div>
