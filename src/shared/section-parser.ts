@@ -173,6 +173,35 @@ export function parseLogText(text: string, sectionName: string): LogEntry[] {
 	return entries;
 }
 
+/**
+ * Insert a markdown line as the last item of the named section, creating the
+ * section (heading + blank line) at end of file when it is absent. Used by the
+ * calendar back-reference and the kanban changelog. Returns the new text.
+ */
+export function insertLineIntoSection(text: string, sectionName: string, line: string): string {
+	const lines = text.split("\n");
+	const range = findSectionByScan(lines, sectionName);
+	if (range) {
+		// Insert after the last non-empty body line of the section.
+		let insertAt = range.bodyEnd;
+		while (insertAt > range.bodyStart && (lines[insertAt - 1] ?? "").trim() === "") {
+			insertAt--;
+		}
+		if (insertAt === range.bodyStart) {
+			// First record in the section → keep a blank line under the heading
+			// (so the first entry isn't flush against the heading).
+			lines.splice(insertAt, 0, "", line);
+		} else {
+			lines.splice(insertAt, 0, line);
+		}
+		return lines.join("\n");
+	}
+	// No section: append heading + blank line + line at end of file.
+	const trimmed = text.replace(/\s*$/, "");
+	const prefix = trimmed.length > 0 ? `${trimmed}\n\n` : "";
+	return `${prefix}## ${sectionName}\n\n${line}\n`;
+}
+
 /** Parse every log entry inside the named section. */
 export function parseLogSection(app: App, file: TFile, text: string, sectionName: string): LogEntry[] {
 	const lines = text.split("\n");

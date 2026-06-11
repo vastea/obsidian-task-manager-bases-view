@@ -11,7 +11,8 @@ import {
 import { mount, unmount } from "svelte";
 import Board from "./Board.svelte";
 import { type KanbanColumn, type KanbanContext, setKanbanState } from "./state.svelte";
-import { isWritable, propertyName, writeProperty } from "../shared/frontmatter-writer";
+import { isWritable, moveWithChangelog, propertyName, writeProperty } from "../shared/frontmatter-writer";
+import { formatISODate } from "../shared/date-util";
 import { openDetail } from "../shared/open-detail";
 import { ConfirmModal } from "../shared/confirm-modal";
 import { colorForIndex, colorForName, neutralColor, parsePredefined } from "../shared/palette";
@@ -67,6 +68,19 @@ export function kanbanViewOptions(config: BasesViewConfig): BasesAllOptions[] {
 			key: "archiveValue",
 			displayName: t("optArchiveValue"),
 			placeholder: "archived",
+		},
+		{
+			type: "toggle",
+			key: "recordChangelog",
+			displayName: t("optRecordChangelog"),
+			default: false,
+		},
+		{
+			type: "text",
+			key: "changelogSection",
+			displayName: t("optChangelogSection"),
+			placeholder: "Changelog",
+			shouldHide: () => config.get("recordChangelog") !== true,
 		},
 	];
 }
@@ -144,7 +158,7 @@ export class KanbanView extends BasesView {
 
 		context.moveCard = (file, column) => {
 			if (!writable || !groupProp) return;
-			void writeProperty(this.app, file, groupProp, column.writeValue);
+			this.writeMove(file, groupProp, column.writeValue);
 		};
 		context.createCard = (column) => {
 			if (!column.canCreate || !groupProp) return;
@@ -214,6 +228,20 @@ export class KanbanView extends BasesView {
 		return ((this.config.get("archiveValue") as string | undefined) ?? "").trim();
 	}
 
+	/**
+	 * Write the group property for a moved card. When the "record changelog" option
+	 * is on, also append a status-change entry to the changelog section in the body.
+	 */
+	private writeMove(file: TFile, groupProp: BasesPropertyId, value: string | null): void {
+		const recordChangelog = this.config.get("recordChangelog") === true;
+		const changelogSection = ((this.config.get("changelogSection") as string | undefined) ?? "Changelog").trim();
+		if (recordChangelog && changelogSection) {
+			void moveWithChangelog(this.app, file, groupProp, value, changelogSection, formatISODate(new Date()));
+		} else {
+			void writeProperty(this.app, file, groupProp, value);
+		}
+	}
+
 	/** Right-click card menu + the "archive all" column action. */
 	private attachContextMenu(
 		context: KanbanContext,
@@ -279,7 +307,7 @@ export class KanbanView extends BasesView {
 		context.dragEnabled = writable;
 		context.moveCard = (file, column) => {
 			if (!writable || !groupProp) return;
-			void writeProperty(this.app, file, groupProp, column.writeValue);
+			this.writeMove(file, groupProp, column.writeValue);
 		};
 		context.createCard = (column) => {
 			if (!column.canCreate || !groupProp) return;

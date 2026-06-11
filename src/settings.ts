@@ -276,8 +276,6 @@ export class TaskManagerSettingTab extends PluginSettingTab {
 				),
 		);
 
-		cal(new Setting(containerEl).setName(t("setCategoriesHeading")).setHeading());
-
 		cal(
 			new Setting(containerEl)
 				.setName(t("setEnableCategories"))
