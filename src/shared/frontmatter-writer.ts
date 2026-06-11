@@ -60,7 +60,7 @@ export async function writeProperty(
 function normalizeStatus(raw: unknown): string {
 	if (raw === undefined || raw === null) return "";
 	if (Array.isArray(raw)) {
-		const first = raw.find((v) => v !== undefined && v !== null && v !== "");
+		const first = (raw as unknown[]).find((v) => v !== undefined && v !== null && v !== "");
 		return first === undefined ? "" : String(first);
 	}
 	return String(raw);
