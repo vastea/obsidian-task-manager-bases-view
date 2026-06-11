@@ -115,6 +115,7 @@ export class KanbanView extends BasesView {
 
 		const context: KanbanContext = {
 			properties,
+			propertyLabel: (propId) => this.config.getDisplayName(propId),
 			renderContext: this.app.renderContext,
 			dragEnabled: false, // set below depending on mode
 			openDetail: (file, evt) => openDetail(this.app, file, evt),

@@ -21,6 +21,8 @@ export interface KanbanColumn {
 
 export interface KanbanContext {
 	properties: BasesPropertyId[];
+	/** Friendly display name for a property (user-renamed name from the Base config). */
+	propertyLabel: (propId: BasesPropertyId) => string;
 	renderContext: RenderContext;
 	/** True when the group property is a writable note.* property. */
 	dragEnabled: boolean;
