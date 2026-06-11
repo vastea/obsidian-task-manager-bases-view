@@ -91,6 +91,14 @@ const dict = {
 		en: "Archive value (right-click card → Archive sets the group property to this)",
 		zh: "归档值（右键卡片 → 归档，会把分组属性写成此值）",
 	},
+	optRecordChangelog: {
+		en: "Record changelog (append a date old->new list item in the body when a card moves)",
+		zh: "记录变更日志（移动卡片时在正文追加一条 日期 旧->新 的列表项）",
+	},
+	optChangelogSection: {
+		en: "Changelog section heading (body section the list items are appended under)",
+		zh: "变更日志章节标题（列表项追加到的正文章节）",
+	},
 	optDates: { en: "Dates", zh: "日期" },
 	optStartProp: { en: "Start date property", zh: "开始日期属性" },
 	optEndProp: { en: "End date property", zh: "结束日期属性" },
@@ -117,7 +125,7 @@ const dict = {
 		en: "Turning a view on/off takes effect only after you disable and re-enable the plugin (or restart Obsidian).",
 		zh: "开关视图后，需要在「社区插件」里关闭再启用本插件（或重启 Obsidian）才会生效。",
 	},
-	setCalendarHeading: { en: "Weekly log calendar", zh: "周历日志日历" },
+	setCalendarHeading: { en: "Weekly log calendar settings", zh: "周历日志日历设置" },
 	setJournalFolder: { en: "Journal folder", zh: "日记文件夹" },
 	setJournalFolderDesc: { en: "Folder containing your daily notes.", zh: "存放日记的文件夹。" },
 	setDateFormat: { en: "Date format", zh: "日期格式" },
@@ -149,7 +157,6 @@ const dict = {
 		en: "Heading inside the linked task where the record is appended.",
 		zh: "回写记录追加到的、被链接任务里的章节标题。",
 	},
-	setCategoriesHeading: { en: "Time-block categories", zh: "时间块类型" },
 	setEnableCategories: { en: "Enable categories", zh: "启用类型" },
 	setEnableCategoriesDesc: {
 		en: "Pick a colour-coded category when creating a block. Off → default colour, no label.",
