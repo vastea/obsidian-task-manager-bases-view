@@ -27,7 +27,7 @@ The plugin is a thin renderer: change frontmatter / Bases config / drag → Base
 - **Record changelog** (view option, off by default): when on, moving a card appends a `- yyyy-MM-dd old->new` list item under a configurable body section (**Changelog section heading**, default `Changelog`), creating the section if absent — so each note keeps a history of its status changes. Unchanged moves write nothing.
 - Plane‑style columns: full height, header with title + count on the left and add / collapse on the right, columns collapse to a vertical bar, soft per‑column tint, in‑flow “new item” button.
 
-![Kanban board with predefined columns (backlog / todo / doing / review / done), each softly tinted; the done column shows an archive‑all action and the empty Uncategorized column is collapsed to a vertical bar on the right](docs/images/kanban-1.png)
+![Kanban board with predefined columns (Backlog / Todo / In Progress / Blocked / Done / Cancelled), each softly tinted; cards show their properties as name: value rows beneath a divider under the title, and the Done column offers an archive‑all action](docs/images/kanban-2.png)
 
 ### Timeline (`tm-timeline`)
 - **Start / end** date properties chosen in view options; `scale` = day / week / month.
@@ -87,7 +87,7 @@ Outputs `main.js` (+ `manifest.json`, `styles.css`) in the project root.
 
 Each view can be turned off independently, and the calendar's settings appear only while its view is enabled, keeping the page tidy:
 
-![Settings — the Weekly log calendar section (shown because its view toggle is on): journal folder, date format, first day of week, the day‑window (start / end) dropdowns, log section heading, optional back‑reference, and colour‑coded categories](docs/images/settings-2.png)
+![Settings — the Weekly log calendar settings section (shown because its view toggle is on): journal folder, date format, first day of week, the day‑window (start / end) dropdowns, log section heading, optional back‑reference, and colour‑coded categories](docs/images/settings-3.png)
 
 ## View options reference
 
