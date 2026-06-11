@@ -6,6 +6,24 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-11
+
+### Added
+- **Kanban — status-change changelog.** A new opt-in "Record changelog" view
+  option. When enabled, moving a card (drag, or right-click → "Move to") appends
+  a `- yyyy-MM-dd old->new` list item under a configurable body section
+  ("Changelog section heading", default `Changelog`), creating the section when
+  absent. No entry is written when the status is unchanged. The old value is
+  captured during the frontmatter write before it is overwritten.
+
+### Changed
+- **Settings — calendar section grouping.** "Time-block categories" was a
+  top-level heading peer to the calendar settings; it is now nested under a
+  single renamed **Weekly log calendar settings** heading.
+- **Internal — shared section insert.** The calendar's body list-insert helper
+  (`insertLineIntoSection`) moved into `shared/section-parser` so the calendar
+  back-reference and the kanban changelog share one implementation.
+
 ## [0.3.0] - 2026-06-10
 
 Weekly-log calendar polish. Presentation-layer only — no data model, field
@@ -88,7 +106,8 @@ Initial release.
   back-references.
 - English / 中文 localisation, switchable in settings.
 
-[Unreleased]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.3.0...HEAD
+[Unreleased]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.4.0...HEAD
+[0.4.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.2.1...0.3.0
 [0.2.1]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.2.0...0.2.1
 [0.2.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.1.0...0.2.0
