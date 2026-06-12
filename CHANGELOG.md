@@ -6,6 +6,16 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-06-12
+
+Maintenance re-release of 0.5.0. No code or behaviour changes.
+
+### Fixed
+- **Release packaging.** The 0.5.0 GitHub release went out without the built
+  `main.js` / `manifest.json` assets, so the plugin couldn't be installed or
+  updated. The release workflow now publishes the release directly (instead of
+  leaving a draft), so the build artifacts are always attached.
+
 ## [0.5.0] - 2026-06-12
 
 ### Changed
@@ -145,7 +155,8 @@ Initial release.
   back-references.
 - English / 中文 localisation, switchable in settings.
 
-[Unreleased]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.5.0...HEAD
+[Unreleased]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.5.1...HEAD
+[0.5.1]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.5.0...0.5.1
 [0.5.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.4.1...0.5.0
 [0.4.1]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.4.0...0.4.1
 [0.4.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.3.0...0.4.0

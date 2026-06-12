@@ -35,13 +35,13 @@ jobs:
             manifest.json
             styles.css
 
-      - name: Create draft release with artifacts
+      - name: Create release with artifacts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tag="${GITHUB_REF#refs/tags/}"
           gh release create "$tag" \
             --title="$tag" \
-            --draft \
+            --latest \
             --generate-notes \
             main.js manifest.json styles.css
