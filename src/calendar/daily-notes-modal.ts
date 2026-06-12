@@ -45,16 +45,16 @@ export class DailyNotesInfoModal extends Modal {
 			row(t("dailyNotesTemplateLabel"), cfg.template || t("none"));
 		}
 
-		const buttons = new Setting(contentEl)
-			.addButton((b) =>
-				b.setButtonText(t("dailyNotesOpenSettings")).onClick(() => this.openDailyNotesSettings()),
-			)
-			.addButton((b) => b.setButtonText(t("dailyNotesAck")).setCta().onClick(() => this.close()));
+		// Two actions only. Closing the modal (X / Esc / click-away) is the implicit
+		// "got it" — it doesn't persist anything, so the reminder shows again next
+		// time. Only "Don't remind again" opts out for good.
+		const buttons = new Setting(contentEl).addButton((b) =>
+			b.setButtonText(t("dailyNotesOpenSettings")).setCta().onClick(() => this.openDailyNotesSettings()),
+		);
 		if (this.onDontRemind) {
 			buttons.addButton((b) =>
 				b
 					.setButtonText(t("dailyNotesDontRemind"))
-					.setWarning()
 					.onClick(() => {
 						this.onDontRemind?.();
 						this.close();

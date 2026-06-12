@@ -14,7 +14,11 @@ export interface TaskManagerSettings {
 	enableCalendar: boolean;
 
 	/** Calendar-only, cross-file conventions. */
-	/** Show the daily-notes config reminder each time the calendar view opens. */
+	/**
+	 * Whether to show the daily-notes config reminder when the calendar opens.
+	 * On by default; there is no settings toggle — the only way to turn it off is
+	 * the modal's "Don't remind again" button. Closing the modal keeps it on.
+	 */
 	dailyNotesReminder: boolean;
 	weekStart: WeekStart;
 	logSection: string;
@@ -154,18 +158,6 @@ export class TaskManagerSettingTab extends PluginSettingTab {
 		// Daily-note folder / filename format / template now come from the core
 		// Daily notes plugin (single source of truth); just point the user there.
 		cal(new Setting(containerEl).setDesc(t("setDailyNotesHint")));
-
-		cal(
-			new Setting(containerEl)
-				.setName(t("setDailyNotesReminder"))
-				.setDesc(t("setDailyNotesReminderDesc"))
-				.addToggle((tg) =>
-					tg.setValue(this.plugin.settings.dailyNotesReminder).onChange(async (v) => {
-						this.plugin.settings.dailyNotesReminder = v;
-						await this.plugin.saveSettings();
-					}),
-				),
-		);
 
 		cal(
 			new Setting(containerEl)

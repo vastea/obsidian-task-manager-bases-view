@@ -144,13 +144,7 @@ const dict = {
 		zh: "核心「日记」插件尚未启用。请在 设置 → 核心插件 中启用它，然后配置其文件夹、日期格式与模板。",
 	},
 	dailyNotesOpenSettings: { en: "Open Daily notes settings", zh: "打开日记设置" },
-	dailyNotesAck: { en: "Got it", zh: "知道了" },
 	dailyNotesDontRemind: { en: "Don't remind again", zh: "不再提醒" },
-	setDailyNotesReminder: { en: "Remind on open", zh: "打开时提醒" },
-	setDailyNotesReminderDesc: {
-		en: "Show the daily-notes config reminder each time the weekly log opens.",
-		zh: "每次打开周历日志时显示日记配置提醒。",
-	},
 	logWriteFail: {
 		en: "Couldn't write the log. Enable the core Daily notes plugin (Settings → Core plugins → Daily notes) and try again.",
 		zh: "无法写入日志。请启用核心「日记」插件（设置 → 核心插件 → 日记）后重试。",
