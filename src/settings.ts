@@ -14,8 +14,8 @@ export interface TaskManagerSettings {
 	enableCalendar: boolean;
 
 	/** Calendar-only, cross-file conventions. */
-	journalFolder: string;
-	dateFormat: string;
+	/** Show the daily-notes config reminder each time the calendar view opens. */
+	dailyNotesReminder: boolean;
 	weekStart: WeekStart;
 	logSection: string;
 
@@ -38,9 +38,11 @@ export const DEFAULT_SETTINGS: TaskManagerSettings = {
 	language: "en",
 	enableKanban: true,
 	enableTimeline: true,
-	enableCalendar: true,
-	journalFolder: "Journal",
-	dateFormat: "YYYY-MM-DD",
+	// Off by default: the weekly log depends on the core Daily notes plugin, so
+	// users opt in explicitly. Existing users keep their saved value (loadSettings
+	// merges saved data over these defaults), so this never disables their view.
+	enableCalendar: false,
+	dailyNotesReminder: true,
 	weekStart: "monday",
 	logSection: "Log",
 	dayStartHour: 0,
@@ -126,17 +128,20 @@ export class TaskManagerSettingTab extends PluginSettingTab {
 			);
 		reloadNotice(timeline);
 
-		const calendar = new Setting(containerEl)
+		// Calendar entry points toggle live — no plugin reload needed, so no notice.
+		new Setting(containerEl)
 			.setName(t("setCalendar"))
 			.setDesc(t("setCalendarDesc"))
 			.addToggle((tg) =>
 				tg.setValue(this.plugin.settings.enableCalendar).onChange(async (v) => {
 					this.plugin.settings.enableCalendar = v;
 					await this.plugin.saveSettings();
+					// The daily-notes reminder is shown when the view opens, not here.
+					if (v) this.plugin.enableCalendarFeature();
+					else this.plugin.disableCalendarFeature();
 					setCalendarVisible(v);
 				}),
 			);
-		reloadNotice(calendar);
 
 		// All calendar settings are gathered here so they can be hidden in one go
 		// when the calendar view is disabled.
@@ -145,33 +150,19 @@ export class TaskManagerSettingTab extends PluginSettingTab {
 
 		cal(new Setting(containerEl).setName(t("setCalendarHeading")).setHeading());
 
-		cal(
-			new Setting(containerEl)
-				.setName(t("setJournalFolder"))
-				.setDesc(t("setJournalFolderDesc"))
-				.addText((tx) =>
-					tx
-						.setPlaceholder("Journal")
-						.setValue(this.plugin.settings.journalFolder)
-						.onChange(async (v) => {
-							this.plugin.settings.journalFolder = v.trim();
-							await this.plugin.saveSettings();
-						}),
-				),
-		);
+		// Daily-note folder / filename format / template now come from the core
+		// Daily notes plugin (single source of truth); just point the user there.
+		cal(new Setting(containerEl).setDesc(t("setDailyNotesHint")));
 
 		cal(
 			new Setting(containerEl)
-				.setName(t("setDateFormat"))
-				.setDesc(t("setDateFormatDesc"))
-				.addText((tx) =>
-					tx
-						.setPlaceholder("YYYY-MM-DD")
-						.setValue(this.plugin.settings.dateFormat)
-						.onChange(async (v) => {
-							this.plugin.settings.dateFormat = v.trim() || "YYYY-MM-DD";
-							await this.plugin.saveSettings();
-						}),
+				.setName(t("setDailyNotesReminder"))
+				.setDesc(t("setDailyNotesReminderDesc"))
+				.addToggle((tg) =>
+					tg.setValue(this.plugin.settings.dailyNotesReminder).onChange(async (v) => {
+						this.plugin.settings.dailyNotesReminder = v;
+						await this.plugin.saveSettings();
+					}),
 				),
 		);
 
