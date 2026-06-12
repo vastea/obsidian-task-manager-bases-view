@@ -87,7 +87,7 @@ Outputs `main.js` (+ `manifest.json`, `styles.css`) in the project root.
 
 Each view can be turned off independently, and the calendar's settings appear only while its view is enabled, keeping the page tidy:
 
-![Settings — the Weekly log calendar settings section (shown because its view toggle is on): first day of week, the day‑window (start / end) dropdowns, log section heading, optional back‑reference, and colour‑coded categories](docs/images/settings-3.png)
+![Settings — the Weekly log calendar settings section (shown because its view toggle is on): first day of week, the day‑window (start / end) dropdowns, log section heading, optional back‑reference, and colour‑coded categories](docs/images/settings-4.png)
 
 ## View options reference
 

@@ -6,6 +6,30 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-12
+
+### Changed
+- **Calendar — daily notes via the core Daily notes plugin.** The weekly log now
+  creates and looks up daily notes through the core **Daily notes** plugin (via
+  `obsidian-daily-notes-interface`) instead of its own folder/format settings, so
+  the daily-note folder, filename date format and template are a single source of
+  truth (Settings → Core plugins → Daily notes) — nested folders and templates are
+  applied for you. The plugin's own "Journal folder" and "Date format" settings
+  were removed. The weekly-log calendar stays enabled by default and needs the
+  core Daily notes plugin; a Notice points the way when it isn't enabled.
+- **Calendar — live enable/disable.** Toggling the calendar in settings now
+  adds/removes its ribbon icon and command immediately, without disabling and
+  re-enabling the plugin.
+
+### Added
+- **Calendar — daily-notes reminder.** Opening the weekly log shows an
+  informational modal confirming the active daily-note folder / filename format /
+  template, with a shortcut to the core plugin's settings. "Don't remind again"
+  opts out permanently; closing the modal keeps the reminder for next time.
+- **Calendar — compact short blocks.** Time blocks too short for the stacked
+  layout switch to a single horizontal line (time + ellipsised rest); the full
+  content stays in the hover tooltip.
+
 ## [0.4.1] - 2026-06-11
 
 ### Fixed
@@ -121,7 +145,8 @@ Initial release.
   back-references.
 - English / 中文 localisation, switchable in settings.
 
-[Unreleased]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.4.1...HEAD
+[Unreleased]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.5.0...HEAD
+[0.5.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.4.1...0.5.0
 [0.4.1]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.4.0...0.4.1
 [0.4.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.2.1...0.3.0
