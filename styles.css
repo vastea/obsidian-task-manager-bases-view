@@ -653,6 +653,23 @@ button.tm-cal-title:hover {
 	filter: brightness(1.06);
 }
 .tm-cal-block.is-dragging { opacity: 0.7; cursor: grabbing; filter: none; }
+/* Short blocks: lay time + rest on one horizontal line instead of stacking
+   columns that would be clipped. Full text stays in the title tooltip. */
+.tm-cal-block.is-compact {
+	flex-direction: row;
+	align-items: baseline;
+	gap: 4px;
+}
+.tm-cal-block.is-compact > span {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	min-width: 0;
+}
+.tm-cal-block.is-compact .tm-cal-block-time { flex: 0 0 auto; }
+.tm-cal-block.is-compact .tm-cal-block-cat,
+.tm-cal-block.is-compact .tm-cal-block-link,
+.tm-cal-block.is-compact .tm-cal-block-note { flex: 0 1 auto; }
 .tm-cal-block-cat {
 	align-self: flex-start;
 	max-width: 100%;
@@ -764,4 +781,14 @@ button.tm-cal-title:hover {
 	margin-top: var(--size-4-1);
 	font-size: var(--font-ui-smaller);
 	color: var(--text-faint);
+}
+
+/* Daily-notes confirmation modal: config summary list. */
+.tm-daily-notes-list {
+	margin: 0.5em 0 1em;
+	padding-left: 1.2em;
+	line-height: 1.6;
+}
+.tm-daily-notes-list li {
+	color: var(--text-normal);
 }

@@ -44,8 +44,18 @@
 			((entry.endMinutes - entry.startMinutes + resizeDelta) / 60) * hourHeight,
 		),
 	);
+	// Below this height the multi-line column layout gets clipped to noise, so we
+	// switch to a single horizontal line (time + ellipsised rest).
+	const COMPACT_PX = 34;
+	const compact = $derived(height <= COMPACT_PX);
+
+	// Tooltip carries the full content (time + category + link + note) so a
+	// clipped/compact block can still be read in full on hover.
 	const label = $derived(
-		`${formatTime(entry.startMinutes)}–${formatTime(entry.endMinutes)}${entry.link ? " " + entry.link : ""}`,
+		`${formatTime(entry.startMinutes)}–${formatTime(entry.endMinutes)}` +
+			(entry.category ? ` (${entry.category})` : "") +
+			(entry.link ? ` ${entry.link}` : "") +
+			(entry.note ? ` ${entry.note}` : ""),
 	);
 
 	function snap(min: number): number {
@@ -135,6 +145,7 @@
 <div
 	class="tm-cal-block"
 	class:is-dragging={dragging}
+	class:is-compact={compact}
 	class:has-color={!!entry.color}
 	style:top="{top}px"
 	style:height="{height}px"
