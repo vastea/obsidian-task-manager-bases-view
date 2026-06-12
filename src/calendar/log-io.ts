@@ -1,4 +1,11 @@
-import { type App, type TFile, moment, normalizePath } from "obsidian";
+import { type App, type TFile, moment } from "obsidian";
+import {
+	appHasDailyNotesPluginLoaded,
+	createDailyNote,
+	getAllDailyNotes,
+	getDailyNote as getDailyNoteForMoment,
+	getDailyNoteSettings,
+} from "obsidian-daily-notes-interface";
 import type { TaskManagerSettings } from "../settings";
 import {
 	type LogEntry,
@@ -9,31 +16,50 @@ import {
 } from "../shared/section-parser";
 
 /**
- * All file IO for the weekly-log calendar: locating / creating daily notes and
- * reading / writing the log section. The only body convention is the log
- * section format defined in shared/section-parser.
+ * All file IO for the weekly-log calendar. Daily-note location/creation is
+ * delegated to the core Daily notes plugin (via obsidian-daily-notes-interface),
+ * so the folder / filename format / template are a single source of truth and
+ * nested folders + templates are handled for us. The only body convention this
+ * file owns is the log section format defined in shared/section-parser.
  */
 
-export function dailyNotePath(date: Date, settings: TaskManagerSettings): string {
-	const name = moment(date).format(settings.dateFormat);
-	const folder = settings.journalFolder.trim().replace(/\/+$/, "");
-	return normalizePath(folder ? `${folder}/${name}.md` : `${name}.md`);
+/** Whether the core Daily notes plugin (or Periodic Notes) is available. */
+export function dailyNotesPluginEnabled(): boolean {
+	return appHasDailyNotesPluginLoaded();
 }
 
-export function getDailyNote(app: App, date: Date, settings: TaskManagerSettings): TFile | null {
-	return app.vault.getFileByPath(dailyNotePath(date, settings));
+export interface DailyNotesConfig {
+	enabled: boolean;
+	folder: string;
+	format: string;
+	template: string;
 }
 
-export async function ensureDailyNote(app: App, date: Date, settings: TaskManagerSettings): Promise<TFile> {
-	const path = dailyNotePath(date, settings);
-	const existing = app.vault.getFileByPath(path);
+/** Current daily-note config (folder/format/template) as resolved by the core plugin. */
+export function dailyNotesConfig(): DailyNotesConfig {
+	const s = getDailyNoteSettings();
+	return {
+		enabled: appHasDailyNotesPluginLoaded(),
+		folder: s?.folder ?? "",
+		format: s?.format ?? "",
+		template: s?.template ?? "",
+	};
+}
+
+/** Find an existing daily note for the date, or null. */
+export function findDailyNote(date: Date): TFile | null {
+	if (!appHasDailyNotesPluginLoaded()) return null;
+	return getDailyNoteForMoment(moment(date), getAllDailyNotes()) ?? null;
+}
+
+/** Find or create the daily note for the date (recursively creates folders + applies the template). */
+export async function ensureDailyNote(date: Date): Promise<TFile> {
+	const existing = findDailyNote(date);
 	if (existing) return existing;
-
-	const folder = settings.journalFolder.trim().replace(/\/+$/, "");
-	if (folder && !app.vault.getFolderByPath(normalizePath(folder))) {
-		await app.vault.createFolder(normalizePath(folder));
-	}
-	return app.vault.create(path, "");
+	if (!appHasDailyNotesPluginLoaded()) throw new Error("Daily notes plugin is not enabled");
+	const created = await createDailyNote(moment(date));
+	if (!created) throw new Error("Failed to create daily note");
+	return created;
 }
 
 export async function readDayEntries(
@@ -41,7 +67,7 @@ export async function readDayEntries(
 	date: Date,
 	settings: TaskManagerSettings,
 ): Promise<LogEntry[]> {
-	const file = getDailyNote(app, date, settings);
+	const file = findDailyNote(date);
 	if (!file) return [];
 	const text = await app.vault.cachedRead(file);
 	return parseLogText(text, settings.logSection).sort((a, b) => a.startMinutes - b.startMinutes);
@@ -62,7 +88,7 @@ export async function insertLog(
 	endMinutes: number,
 	draft: LogDraft = {},
 ): Promise<void> {
-	const file = await ensureDailyNote(app, date, settings);
+	const file = await ensureDailyNote(date);
 	const link = draft.link ?? null;
 	const line = formatLogLine(
 		formatTime(startMinutes),
@@ -102,10 +128,9 @@ async function writeBacklink(
 export async function deleteLogLine(
 	app: App,
 	date: Date,
-	settings: TaskManagerSettings,
 	lineIndex: number,
 ): Promise<void> {
-	const file = getDailyNote(app, date, settings);
+	const file = findDailyNote(date);
 	if (!file) return;
 	await app.vault.process(file, (text) => {
 		const lines = text.split("\n");
@@ -119,12 +144,11 @@ export async function deleteLogLine(
 export async function updateLogTime(
 	app: App,
 	date: Date,
-	settings: TaskManagerSettings,
 	lineIndex: number,
 	startMinutes: number,
 	endMinutes: number,
 ): Promise<void> {
-	const file = getDailyNote(app, date, settings);
+	const file = findDailyNote(date);
 	if (!file) return;
 	await app.vault.process(file, (text) => {
 		const lines = text.split("\n");

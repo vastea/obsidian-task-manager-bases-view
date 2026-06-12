@@ -1,8 +1,15 @@
-import { type WorkspaceLeaf, ItemView, debounce } from "obsidian";
+import { type WorkspaceLeaf, ItemView, Notice, debounce } from "obsidian";
 import { mount, unmount } from "svelte";
 import WeekGrid from "./WeekGrid.svelte";
 import { type CalContext, type CalDay, type CalEntry, getCalState, setCalState } from "./state.svelte";
-import { dailyNotePath, deleteLogLine, insertLog, readDayEntries, updateLogTime } from "./log-io";
+import {
+	dailyNotesPluginEnabled,
+	deleteLogLine,
+	findDailyNote,
+	insertLog,
+	readDayEntries,
+	updateLogTime,
+} from "./log-io";
 import { LogBlockModal } from "./log-modal";
 import { type Category, parseCategories } from "../settings";
 import { addDays, sameDay, startOfDay } from "../shared/date-util";
@@ -61,6 +68,13 @@ export class CalendarView extends ItemView {
 		this.registerInterval(window.setInterval(() => this.updateNow(), 60000));
 
 		await this.refresh();
+
+		// The weekly log reads/writes daily notes via the core Daily notes plugin.
+		// If it isn't enabled there's nowhere to store logs — tell the user, but
+		// never touch their core-plugin config ourselves.
+		if (!dailyNotesPluginEnabled()) {
+			new Notice(t("calendarNeedsDailyNotes"), 10000);
+		}
 	}
 
 	protected async onClose(): Promise<void> {
@@ -204,7 +218,7 @@ export class CalendarView extends ItemView {
 		// A time block lives in the day's journal note — open that note at the
 		// log line (not the task the line happens to link to).
 		const date = addDays(this.weekStart, entry.dayIndex);
-		const dayNote = this.app.vault.getFileByPath(dailyNotePath(date, this.plugin.settings));
+		const dayNote = findDailyNote(date);
 		if (dayNote) openDetail(this.app, dayNote, null, entry.lineIndex);
 	}
 
@@ -217,12 +231,17 @@ export class CalendarView extends ItemView {
 			categories: this.categories(),
 			onSubmit: (result) => {
 				void (async () => {
-					await insertLog(this.app, date, this.plugin.settings, result.startMinutes, result.endMinutes, {
-						link: result.link,
-						note: result.note,
-						category: result.category,
-					});
-					await this.refresh();
+					try {
+						await insertLog(this.app, date, this.plugin.settings, result.startMinutes, result.endMinutes, {
+							link: result.link,
+							note: result.note,
+							category: result.category,
+						});
+						await this.refresh();
+					} catch (e) {
+						new Notice(t("logWriteFail"));
+						console.error("tm-calendar: failed to write log", e);
+					}
 				})();
 			},
 		}).open();
@@ -230,13 +249,13 @@ export class CalendarView extends ItemView {
 
 	private async updateBlock(entry: CalEntry, start: number, end: number): Promise<void> {
 		const date = addDays(this.weekStart, entry.dayIndex);
-		await updateLogTime(this.app, date, this.plugin.settings, entry.lineIndex, start, end);
+		await updateLogTime(this.app, date, entry.lineIndex, start, end);
 		await this.refresh();
 	}
 
 	private async deleteBlock(entry: CalEntry): Promise<void> {
 		const date = addDays(this.weekStart, entry.dayIndex);
-		await deleteLogLine(this.app, date, this.plugin.settings, entry.lineIndex);
+		await deleteLogLine(this.app, date, entry.lineIndex);
 		await this.refresh();
 	}
 }

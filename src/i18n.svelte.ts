@@ -126,12 +126,32 @@ const dict = {
 		zh: "开关视图后，需要在「社区插件」里关闭再启用本插件（或重启 Obsidian）才会生效。",
 	},
 	setCalendarHeading: { en: "Weekly log calendar settings", zh: "周历日志日历设置" },
-	setJournalFolder: { en: "Journal folder", zh: "日记文件夹" },
-	setJournalFolderDesc: { en: "Folder containing your daily notes.", zh: "存放日记的文件夹。" },
-	setDateFormat: { en: "Date format", zh: "日期格式" },
-	setDateFormatDesc: {
-		en: "Moment format of daily-note filenames, e.g. YYYY-MM-DD.",
-		zh: "日记文件名的 Moment 格式，例如 YYYY-MM-DD。",
+	setDailyNotesHint: {
+		en: "This view creates and looks up daily notes from the core Daily notes plugin's configuration. Review and adjust as needed — daily-note folder, filename date format, and template — under Settings → Core plugins → Daily notes.",
+		zh: "此视图会根据核心「日记」插件的配置新建或查询日记。建议先确认并按需修改对应配置——日记文件夹、文件名日期格式、日记模板，均在 设置 → 核心插件 → 日记 中。",
+	},
+	dailyNotesTitle: { en: "Weekly log — daily notes", zh: "周历日志 —— 日记配置" },
+	dailyNotesIntro: {
+		en: "This view creates and looks up daily notes using the core Daily notes plugin. Confirm the settings below, and change them under Settings → Core plugins → Daily notes if needed:",
+		zh: "此视图会通过核心「日记」插件新建或查询日记。请确认以下配置，如需修改请前往 设置 → 核心插件 → 日记：",
+	},
+	dailyNotesFolderLabel: { en: "Daily-note folder", zh: "日记文件夹" },
+	dailyNotesFormatLabel: { en: "Filename date format", zh: "文件名日期格式" },
+	dailyNotesTemplateLabel: { en: "Template", zh: "日记模板" },
+	dailyNotesVaultRoot: { en: "(vault root)", zh: "（库根目录）" },
+	dailyNotesDisabled: {
+		en: "The core Daily notes plugin isn't enabled. Enable it under Settings → Core plugins, then configure its folder, date format and template.",
+		zh: "核心「日记」插件尚未启用。请在 设置 → 核心插件 中启用它，然后配置其文件夹、日期格式与模板。",
+	},
+	dailyNotesOpenSettings: { en: "Open Daily notes settings", zh: "打开日记设置" },
+	dailyNotesDontRemind: { en: "Don't remind again", zh: "不再提醒" },
+	logWriteFail: {
+		en: "Couldn't write the log. Enable the core Daily notes plugin (Settings → Core plugins → Daily notes) and try again.",
+		zh: "无法写入日志。请启用核心「日记」插件（设置 → 核心插件 → 日记）后重试。",
+	},
+	calendarNeedsDailyNotes: {
+		en: "Weekly log stores entries in your daily notes. Enable and configure the core Daily notes plugin (Settings → Core plugins → Daily notes) — folder, date format and template are taken from there.",
+		zh: "周历日志把记录写入你的日记。请先启用并配置核心「日记」插件（设置 → 核心插件 → 日记）——文件夹、日期格式与模板都取自那里。",
 	},
 	setFirstDay: { en: "First day of week", zh: "每周起始日" },
 	setMonday: { en: "Monday", zh: "周一" },
