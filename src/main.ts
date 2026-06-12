@@ -48,11 +48,12 @@ export default class TaskManagerPlugin extends Plugin {
 
 	/** Add the calendar's ribbon icon + command (idempotent). Driven live from settings. */
 	enableCalendarFeature(): void {
-		if (!this.calendarRibbon) {
-			this.calendarRibbon = this.addRibbonIcon("calendar-clock", t("openWeeklyLog"), () =>
-				void this.activateCalendar(),
-			);
-		}
+		// Ribbon and command are added/removed together, so the ribbon's presence is
+		// the single "already enabled" signal — guard both on it to stay idempotent.
+		if (this.calendarRibbon) return;
+		this.calendarRibbon = this.addRibbonIcon("calendar-clock", t("openWeeklyLog"), () =>
+			void this.activateCalendar(),
+		);
 		this.addCommand({
 			id: TaskManagerPlugin.CALENDAR_COMMAND_ID,
 			// Command names are read once at registration; keep English + localized.

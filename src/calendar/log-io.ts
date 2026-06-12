@@ -23,9 +23,6 @@ import {
  * file owns is the log section format defined in shared/section-parser.
  */
 
-/** Thrown when a write needs a daily note but the core plugin is unavailable. */
-export class DailyNotesUnavailableError extends Error {}
-
 /** Whether the core Daily notes plugin (or Periodic Notes) is available. */
 export function dailyNotesPluginEnabled(): boolean {
 	return appHasDailyNotesPluginLoaded();
@@ -59,9 +56,9 @@ export function findDailyNote(date: Date): TFile | null {
 export async function ensureDailyNote(date: Date): Promise<TFile> {
 	const existing = findDailyNote(date);
 	if (existing) return existing;
-	if (!appHasDailyNotesPluginLoaded()) throw new DailyNotesUnavailableError();
+	if (!appHasDailyNotesPluginLoaded()) throw new Error("Daily notes plugin is not enabled");
 	const created = await createDailyNote(moment(date));
-	if (!created) throw new DailyNotesUnavailableError();
+	if (!created) throw new Error("Failed to create daily note");
 	return created;
 }
 

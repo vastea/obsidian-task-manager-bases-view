@@ -660,7 +660,10 @@ button.tm-cal-title:hover {
 	align-items: baseline;
 	gap: 4px;
 }
-.tm-cal-block.is-compact > span {
+.tm-cal-block.is-compact > .tm-cal-block-time,
+.tm-cal-block.is-compact > .tm-cal-block-cat,
+.tm-cal-block.is-compact > .tm-cal-block-link,
+.tm-cal-block.is-compact > .tm-cal-block-note {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;

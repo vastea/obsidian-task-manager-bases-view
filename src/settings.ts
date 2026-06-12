@@ -38,10 +38,11 @@ export const DEFAULT_SETTINGS: TaskManagerSettings = {
 	language: "en",
 	enableKanban: true,
 	enableTimeline: true,
-	// Off by default: the weekly log depends on the core Daily notes plugin, so
-	// users opt in explicitly. Existing users keep their saved value (loadSettings
-	// merges saved data over these defaults), so this never disables their view.
-	enableCalendar: false,
+	// On by default. The weekly log needs the core Daily notes plugin; when it's
+	// missing the view surfaces a Notice rather than silently disappearing. We keep
+	// this true so an update never removes the ribbon/command from existing users
+	// who used the calendar on defaults without ever persisting settings.
+	enableCalendar: true,
 	dailyNotesReminder: true,
 	weekStart: "monday",
 	logSection: "Log",

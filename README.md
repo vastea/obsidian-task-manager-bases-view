@@ -80,14 +80,14 @@ Outputs `main.js` (+ `manifest.json`, `styles.css`) in the project root.
 2. Add a **tm-kanban** or **tm-timeline** view; configure it from the Bases toolbar:
    - Kanban: set **Group by** (e.g. `status`); optionally enable **Use predefined columns** and fill the column values / colours / done statuses / archive value.
    - Timeline: pick the **start / end** date properties and a **scale**.
-3. For the calendar, run the command **Open weekly log** (or the ribbon clock icon).
-4. Global, cross‑file conventions (journal folder, date format, week start, day window, log section, categories, back‑reference) live in **Settings → Task Manager Bases View**.
+3. The calendar stores entries in your daily notes, so it needs the core **Daily notes** plugin enabled (Settings → Core plugins → Daily notes). Run the command **Open weekly log** (or the ribbon clock icon); you can turn the view off under **Settings → Task Manager Bases View**.
+4. Global, cross‑file conventions (week start, day window, log section, categories, back‑reference) live in **Settings → Task Manager Bases View**. The daily‑note folder, filename format and template are taken from the core **Daily notes** plugin (Settings → Core plugins → Daily notes) — no duplicate config here.
 
 > Toggling a view on/off in settings takes effect only after you disable and re‑enable the plugin (or restart Obsidian) — Bases has no per‑view unregister API.
 
 Each view can be turned off independently, and the calendar's settings appear only while its view is enabled, keeping the page tidy:
 
-![Settings — the Weekly log calendar settings section (shown because its view toggle is on): journal folder, date format, first day of week, the day‑window (start / end) dropdowns, log section heading, optional back‑reference, and colour‑coded categories](docs/images/settings-3.png)
+![Settings — the Weekly log calendar settings section (shown because its view toggle is on): first day of week, the day‑window (start / end) dropdowns, log section heading, optional back‑reference, and colour‑coded categories](docs/images/settings-3.png)
 
 ## View options reference
 
