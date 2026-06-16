@@ -12,6 +12,7 @@ import {
 	formatLogLine,
 	formatTime,
 	insertLineIntoSection,
+	parseLogLine,
 	parseLogText,
 } from "../shared/section-parser";
 
@@ -105,6 +106,17 @@ export async function insertLog(
 	}
 }
 
+/** Date + time-range prefix of a back-reference record; used to locate it for in-place edits. */
+function backlinkPrefix(date: Date, startMinutes: number, endMinutes: number): string {
+	const day = moment(date).format("YYYY-MM-DD");
+	return `- ${day} ${formatTime(startMinutes)}-${formatTime(endMinutes)}`;
+}
+
+/** Full back-reference record line (prefix + optional note). */
+function backlinkRecord(date: Date, startMinutes: number, endMinutes: number, note: string): string {
+	return `${backlinkPrefix(date, startMinutes, endMinutes)}${note ? ` ${note}` : ""}`;
+}
+
 /** Append a record under a heading inside the linked task note. */
 async function writeBacklink(
 	app: App,
@@ -117,59 +129,106 @@ async function writeBacklink(
 ): Promise<void> {
 	const target = app.metadataCache.getFirstLinkpathDest(link, "");
 	if (!target) return;
-	const day = moment(date).format("YYYY-MM-DD");
-	const record = `- ${day} ${formatTime(startMinutes)}-${formatTime(endMinutes)}${note ? ` ${note}` : ""}`;
+	const record = backlinkRecord(date, startMinutes, endMinutes, note);
 	await app.vault.process(target, (text) =>
 		insertLineIntoSection(text, settings.logBacklinkSection, record),
 	);
 }
 
-/** Delete a log line by its line index in the day's note. */
-export async function deleteLogLine(
+/**
+ * Keep the back-reference in the linked task in step with a moved / resized /
+ * deleted block. The existing record is matched by its date + *old* time range
+ * (the note is ignored, so a hand-edited note still matches); `next === null`
+ * removes the record, otherwise it is rewritten to the new time / note.
+ * No-op when back-references are off, the link is empty, the task or the record
+ * can't be found.
+ */
+async function syncBacklink(
 	app: App,
+	settings: TaskManagerSettings,
+	link: string | null,
 	date: Date,
-	lineIndex: number,
+	oldStart: number,
+	oldEnd: number,
+	next: { startMinutes: number; endMinutes: number; note: string } | null,
 ): Promise<void> {
-	const file = findDailyNote(date);
-	if (!file) return;
-	await app.vault.process(file, (text) => {
+	if (!settings.logBacklink || !link) return;
+	const target = app.metadataCache.getFirstLinkpathDest(link, "");
+	if (!target) return;
+	const prefix = backlinkPrefix(date, oldStart, oldEnd);
+	await app.vault.process(target, (text) => {
 		const lines = text.split("\n");
-		if (lineIndex < 0 || lineIndex >= lines.length) return text;
-		lines.splice(lineIndex, 1);
+		const idx = lines.findIndex((l) => l.trimStart().startsWith(prefix));
+		if (idx === -1) return text;
+		if (next === null) {
+			lines.splice(idx, 1);
+		} else {
+			lines[idx] = backlinkRecord(date, next.startMinutes, next.endMinutes, next.note);
+		}
 		return lines.join("\n");
 	});
 }
 
-/** Replace the time on an existing log line (used when dragging a block). */
+/** Delete a log line by its line index in the day's note (and its back-reference). */
+export async function deleteLogLine(
+	app: App,
+	date: Date,
+	lineIndex: number,
+	settings: TaskManagerSettings,
+): Promise<void> {
+	const file = findDailyNote(date);
+	if (!file) return;
+	let removed: LogEntry | null = null;
+	await app.vault.process(file, (text) => {
+		const lines = text.split("\n");
+		if (lineIndex < 0 || lineIndex >= lines.length) return text;
+		removed = parseLogLine(lines[lineIndex] ?? "", lineIndex);
+		lines.splice(lineIndex, 1);
+		return lines.join("\n");
+	});
+	// Drop the matching back-reference in the linked task, if any.
+	if (removed) {
+		const r: LogEntry = removed;
+		await syncBacklink(app, settings, r.link, date, r.startMinutes, r.endMinutes, null);
+	}
+}
+
+/** Replace the time on an existing log line (used when dragging a block); keeps the back-reference in step. */
 export async function updateLogTime(
 	app: App,
 	date: Date,
 	lineIndex: number,
 	startMinutes: number,
 	endMinutes: number,
+	settings: TaskManagerSettings,
 ): Promise<void> {
 	const file = findDailyNote(date);
 	if (!file) return;
+	let old: LogEntry | null = null;
 	await app.vault.process(file, (text) => {
 		const lines = text.split("\n");
-		const old = lines[lineIndex];
-		if (old === undefined) return text;
+		const line = lines[lineIndex];
+		if (line === undefined) return text;
 		// Keep the existing category / link / note, only rewrite the time range.
-		const { link, note, category } = reparseLine(old);
+		const parsed = parseLogLine(line, lineIndex);
+		if (!parsed) return text;
+		old = parsed;
 		lines[lineIndex] = formatLogLine(
 			formatTime(startMinutes),
 			formatTime(endMinutes),
-			link,
-			note,
-			category,
+			parsed.link,
+			parsed.note,
+			parsed.category,
 		);
 		return lines.join("\n");
 	});
-}
-
-function reparseLine(line: string): { link: string | null; note: string; category: string | null } {
-	const entries = parseLogText(`## __tmp__\n${line}`, "__tmp__");
-	const first = entries[0];
-	if (first) return { link: first.link, note: first.note, category: first.category };
-	return { link: null, note: "", category: null };
+	// Move the matching back-reference in the linked task to the new time.
+	if (old) {
+		const o: LogEntry = old;
+		await syncBacklink(app, settings, o.link, date, o.startMinutes, o.endMinutes, {
+			startMinutes,
+			endMinutes,
+			note: o.note,
+		});
+	}
 }

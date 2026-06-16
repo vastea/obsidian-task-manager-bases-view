@@ -249,13 +249,13 @@ export class CalendarView extends ItemView {
 
 	private async updateBlock(entry: CalEntry, start: number, end: number): Promise<void> {
 		const date = addDays(this.weekStart, entry.dayIndex);
-		await updateLogTime(this.app, date, entry.lineIndex, start, end);
+		await updateLogTime(this.app, date, entry.lineIndex, start, end, this.plugin.settings);
 		await this.refresh();
 	}
 
 	private async deleteBlock(entry: CalEntry): Promise<void> {
 		const date = addDays(this.weekStart, entry.dayIndex);
-		await deleteLogLine(this.app, date, entry.lineIndex);
+		await deleteLogLine(this.app, date, entry.lineIndex, this.plugin.settings);
 		await this.refresh();
 	}
 }
