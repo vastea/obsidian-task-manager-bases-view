@@ -5,7 +5,10 @@ export interface CalEntry {
 	endMinutes: number;
 	link: string | null;
 	note: string;
+	/** Resolved category display name (colour stripped), or null. */
 	category: string | null;
+	/** Raw `(...)` token from the file, e.g. "Dev|#4c8bf5"; preserved across edits. */
+	categoryToken: string | null;
 	/** Resolved CSS colour for the block, or null → default accent. */
 	color: string | null;
 }
@@ -23,6 +26,8 @@ export interface CalContext {
 	createBlock: (dayIndex: number, startMinutes: number, endMinutes: number) => void;
 	/** Move/resize an existing block to a new time on the same day. */
 	updateBlock: (entry: CalEntry, startMinutes: number, endMinutes: number) => void;
+	/** Open a modal to edit all of an existing block's fields (time/link/note/category). */
+	editBlock: (entry: CalEntry) => void;
 	/** Delete the log line backing this block. */
 	deleteBlock: (entry: CalEntry) => void;
 	gotoPrev: () => void;

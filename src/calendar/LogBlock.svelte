@@ -131,6 +131,7 @@
 		event.stopPropagation();
 		const menu = new Menu();
 		menu.addItem((i) => i.setTitle(t("openInJournal")).setIcon("file-text").onClick(() => context.openEntry(entry)));
+		menu.addItem((i) => i.setTitle(t("editBlock")).setIcon("pencil").onClick(() => context.editBlock(entry)));
 		menu.addSeparator();
 		menu.addItem((i) =>
 			i

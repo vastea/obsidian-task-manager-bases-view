@@ -232,3 +232,84 @@ export async function updateLogTime(
 		});
 	}
 }
+
+/** Identifying fields of the block as it was when the edit modal opened. */
+export interface LogEntryRef {
+	lineIndex: number;
+	startMinutes: number;
+	endMinutes: number;
+	link: string | null;
+	note: string;
+}
+
+/** New field values to write for an edited block. `category` is a raw token (may carry a colour). */
+export interface LogEdit {
+	startMinutes: number;
+	endMinutes: number;
+	note: string;
+	link: string | null;
+	category: string | null;
+}
+
+/**
+ * Full edit of an existing log line (time + link + note + category), keeping the
+ * back-reference in step. Re-locates the line defensively: the modal is async, so
+ * if the stored `lineIndex` no longer matches the block (the note was edited
+ * out-of-band) it scans the section for the one entry that matches. Returns false
+ * when the original block can no longer be found uniquely — the caller refreshes
+ * and warns rather than rewriting the wrong line.
+ */
+export async function updateLogEntry(
+	app: App,
+	date: Date,
+	settings: TaskManagerSettings,
+	old: LogEntryRef,
+	edit: LogEdit,
+): Promise<boolean> {
+	const file = findDailyNote(date);
+	if (!file) return false;
+	let located = false;
+	await app.vault.process(file, (text) => {
+		const lines = text.split("\n");
+		const target = locateLine(lines, settings.logSection, old);
+		if (target === -1) return text;
+		located = true;
+		lines[target] = formatLogLine(
+			formatTime(edit.startMinutes),
+			formatTime(edit.endMinutes),
+			edit.link,
+			edit.note,
+			edit.category,
+		);
+		return lines.join("\n");
+	});
+	if (!located) return false;
+	// Reconcile the back-reference: drop the record for the old link/time, then
+	// add one for the new link/time. Uniformly covers time, note and link changes
+	// (including linking/unlinking a task).
+	await syncBacklink(app, settings, old.link, date, old.startMinutes, old.endMinutes, null);
+	if (settings.logBacklink && edit.link) {
+		await writeBacklink(app, settings, edit.link, date, edit.startMinutes, edit.endMinutes, edit.note);
+	}
+	return true;
+}
+
+/**
+ * Resolve the line backing a block. Prefer the stored index while it still parses
+ * to the same time + link; otherwise scan the section for the single entry whose
+ * time + link + note all match. Returns -1 when absent or ambiguous.
+ */
+function locateLine(lines: string[], section: string, old: LogEntryRef): number {
+	const at = parseLogLine(lines[old.lineIndex] ?? "", old.lineIndex);
+	if (at && at.startMinutes === old.startMinutes && at.endMinutes === old.endMinutes && at.link === old.link) {
+		return old.lineIndex;
+	}
+	const matches = parseLogText(lines.join("\n"), section).filter(
+		(e) =>
+			e.startMinutes === old.startMinutes &&
+			e.endMinutes === old.endMinutes &&
+			e.link === old.link &&
+			e.note === old.note,
+	);
+	return matches.length === 1 && matches[0] ? matches[0].lineIndex : -1;
+}
