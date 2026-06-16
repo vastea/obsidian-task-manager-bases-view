@@ -6,6 +6,22 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-06-16
+
+### Added
+- **Calendar — edit a time block.** Right-click a block → **Edit block** reopens
+  the log modal pre-filled with the block's time, description, linked task and
+  category, and writes a full update back to the daily note. An inline category
+  colour (e.g. `(Dev|#4c8bf5)`) is preserved when you save without changing the
+  category.
+
+### Fixed
+- **Calendar — back-reference stays in sync.** Moving, resizing, deleting or
+  editing a time block now updates (or removes) the matching record in the linked
+  task, not just the daily note. Previously the back-reference was only written
+  when a block was created, so it drifted out of sync or was left stale. Only
+  relevant when "write back-reference into linked task" is enabled.
+
 ## [0.5.1] - 2026-06-12
 
 Maintenance re-release of 0.5.0. No code or behaviour changes.
@@ -155,7 +171,8 @@ Initial release.
   back-references.
 - English / 中文 localisation, switchable in settings.
 
-[Unreleased]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.5.1...HEAD
+[Unreleased]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.6.0...HEAD
+[0.6.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.5.1...0.6.0
 [0.5.1]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.5.0...0.5.1
 [0.5.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.4.1...0.5.0
 [0.4.1]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.4.0...0.4.1
