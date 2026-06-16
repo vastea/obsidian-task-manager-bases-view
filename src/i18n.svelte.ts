@@ -47,8 +47,11 @@ const dict = {
 	// --- Calendar ---
 	weeklyLog: { en: "Weekly log", zh: "周历日志" },
 	openInJournal: { en: "Open in journal", zh: "在日记中打开" },
+	editBlock: { en: "Edit block", zh: "编辑时间块" },
 	deleteBlock: { en: "Delete block", zh: "删除时间块" },
 	newLogBlock: { en: "New log block", zh: "新建时间块" },
+	editLogBlock: { en: "Edit log block", zh: "编辑时间块" },
+	save: { en: "Save", zh: "保存" },
 	time: { en: "Time", zh: "时间" },
 	description: { en: "Description", zh: "描述" },
 	descPlaceholder: { en: "What did you do?", zh: "做了什么？" },
@@ -78,6 +81,10 @@ const dict = {
 		zh: "Task Manager：注册时间线视图失败（需要 Obsidian 1.10+）。",
 	},
 	writeFailed: { en: "Task Manager: failed to update", zh: "Task Manager：更新失败" },
+	logEntryGone: {
+		en: "Couldn't find that time block — it may have been edited or removed. Refreshed the view.",
+		zh: "找不到该时间块——可能已被改动或删除。已刷新视图。",
+	},
 
 	// --- Bases view options ---
 	optUsePredefined: { en: "Use predefined columns", zh: "使用预定义列" },

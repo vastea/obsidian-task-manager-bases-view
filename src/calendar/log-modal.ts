@@ -9,6 +9,7 @@ export interface LogModalResult {
 	endMinutes: number;
 	note: string;
 	link: string | null;
+	/** Raw category token to write back, e.g. "Dev" or "Dev|#4c8bf5"; null → no category. */
 	category: string | null;
 }
 
@@ -17,10 +18,22 @@ export interface LogModalOptions {
 	endMinutes: number;
 	categories: Category[];
 	onSubmit: (result: LogModalResult) => void;
+	/** "create" (default) shows the create copy; "edit" pre-fills and shows edit copy. */
+	mode?: "create" | "edit";
+	/** Initial values, used in edit mode (and ignored when absent). */
+	note?: string;
+	link?: string | null;
+	/** Initial raw category token (may carry an inline colour like "Dev|#4c8bf5"). */
+	category?: string | null;
 }
 
 function stripBrackets(s: string): string {
 	return s.replace(/^\[\[/, "").replace(/\]\]$/, "").trim();
+}
+
+/** Name part of a `(...)` category token, e.g. "Dev|#4c8bf5" → "Dev". */
+function categoryName(token: string | null): string {
+	return (token ?? "").split("|")[0]?.trim() ?? "";
 }
 
 /** Parse an "HH:MM" value (from a native time input) into minutes, or null. */
@@ -33,7 +46,7 @@ function parseTime(v: string): number | null {
 	return h * 60 + min;
 }
 
-/** Modal for creating a calendar log block: description + optional link + category. */
+/** Modal for creating or editing a calendar log block: time + description + optional link + category. */
 export class LogBlockModal extends Modal {
 	private opts: LogModalOptions;
 	private result: LogModalResult;
@@ -42,21 +55,26 @@ export class LogBlockModal extends Modal {
 	constructor(app: App, opts: LogModalOptions) {
 		super(app);
 		this.opts = opts;
-		// Pre-fill with the dragged time; the user can adjust it (drag isn't exact)
-		// but doesn't have to.
+		// Pre-fill with the dragged time (create) or the existing block (edit). In
+		// edit mode the category keeps its raw token so an inline colour survives a
+		// save where the dropdown isn't touched.
 		this.result = {
 			startMinutes: opts.startMinutes,
 			endMinutes: opts.endMinutes,
-			note: "",
-			link: null,
-			category: null,
+			note: opts.note ?? "",
+			link: opts.link ?? null,
+			category: opts.category ?? null,
 		};
+	}
+
+	private get isEdit(): boolean {
+		return this.opts.mode === "edit";
 	}
 
 	onOpen(): void {
 		const { contentEl } = this;
 		contentEl.addClass("tm-log-modal");
-		contentEl.createEl("h3", { text: tr("newLogBlock") });
+		contentEl.createEl("h3", { text: this.isEdit ? tr("editLogBlock") : tr("newLogBlock") });
 
 		// Editable start/end time, pre-filled from the drag. Native time inputs
 		// use 24h "HH:MM" values regardless of display locale.
@@ -78,6 +96,7 @@ export class LogBlockModal extends Modal {
 		});
 
 		new Setting(contentEl).setName(tr("description")).addText((text) => {
+			text.setValue(this.result.note);
 			text.setPlaceholder(tr("descPlaceholder")).onChange((v) => (this.result.note = v.trim()));
 			const input = text.inputEl;
 			input.addEventListener("keydown", (e) => {
@@ -94,6 +113,7 @@ export class LogBlockModal extends Modal {
 			.setName(tr("linkTask"))
 			.setDesc(tr("linkDesc"))
 			.addText((text) => {
+				if (this.result.link) text.setValue(this.result.link);
 				text.setPlaceholder(tr("taskTitlePlaceholder")).onChange((v) => {
 					const val = v.trim();
 					this.result.link = val ? stripBrackets(val) : null;
@@ -109,6 +129,10 @@ export class LogBlockModal extends Modal {
 			new Setting(contentEl).setName(tr("category")).addDropdown((d) => {
 				d.addOption("", tr("none"));
 				for (const c of this.opts.categories) d.addOption(c.name, c.name);
+				// Pre-select by name. `result.category` keeps the raw token (with any
+				// inline colour) until the user actually picks a different value, at
+				// which point we switch to the plain name and drop the colour token.
+				d.setValue(categoryName(this.result.category));
 				d.onChange((v) => (this.result.category = v || null));
 			});
 		}
@@ -116,7 +140,7 @@ export class LogBlockModal extends Modal {
 		new Setting(contentEl)
 			.addButton((b) =>
 				b
-					.setButtonText(tr("create"))
+					.setButtonText(this.isEdit ? tr("save") : tr("create"))
 					.setCta()
 					.onClick(() => {
 						this.submitted = true;

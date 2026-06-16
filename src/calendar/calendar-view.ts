@@ -8,6 +8,7 @@ import {
 	findDailyNote,
 	insertLog,
 	readDayEntries,
+	updateLogEntry,
 	updateLogTime,
 } from "./log-io";
 import { LogBlockModal } from "./log-modal";
@@ -130,6 +131,7 @@ export class CalendarView extends ItemView {
 			openEntry: (entry) => this.openEntry(entry),
 			createBlock: (dayIndex, start, end) => this.createBlock(dayIndex, start, end),
 			updateBlock: (entry, start, end) => void this.updateBlock(entry, start, end),
+			editBlock: (entry) => this.editBlock(entry),
 			deleteBlock: (entry) => void this.deleteBlock(entry),
 			gotoPrev: () => {
 				this.weekStart = addDays(this.weekStart, -7);
@@ -186,6 +188,7 @@ export class CalendarView extends ItemView {
 					link: e.link,
 					note: e.note,
 					category: name,
+					categoryToken: e.category,
 					color,
 				});
 			}
@@ -249,13 +252,57 @@ export class CalendarView extends ItemView {
 
 	private async updateBlock(entry: CalEntry, start: number, end: number): Promise<void> {
 		const date = addDays(this.weekStart, entry.dayIndex);
-		await updateLogTime(this.app, date, entry.lineIndex, start, end);
+		await updateLogTime(this.app, date, entry.lineIndex, start, end, this.plugin.settings);
 		await this.refresh();
+	}
+
+	/** Open the log modal pre-filled with an existing block, then write a full update. */
+	private editBlock(entry: CalEntry): void {
+		const date = addDays(this.weekStart, entry.dayIndex);
+		new LogBlockModal(this.app, {
+			mode: "edit",
+			startMinutes: entry.startMinutes,
+			endMinutes: entry.endMinutes,
+			note: entry.note,
+			link: entry.link,
+			category: entry.categoryToken,
+			categories: this.categories(),
+			onSubmit: (result) => {
+				void (async () => {
+					try {
+						const ok = await updateLogEntry(
+							this.app,
+							date,
+							this.plugin.settings,
+							{
+								lineIndex: entry.lineIndex,
+								startMinutes: entry.startMinutes,
+								endMinutes: entry.endMinutes,
+								link: entry.link,
+								note: entry.note,
+							},
+							{
+								startMinutes: result.startMinutes,
+								endMinutes: result.endMinutes,
+								note: result.note,
+								link: result.link,
+								category: result.category,
+							},
+						);
+						if (!ok) new Notice(t("logEntryGone"));
+						await this.refresh();
+					} catch (e) {
+						new Notice(t("logWriteFail"));
+						console.error("tm-calendar: failed to edit log", e);
+					}
+				})();
+			},
+		}).open();
 	}
 
 	private async deleteBlock(entry: CalEntry): Promise<void> {
 		const date = addDays(this.weekStart, entry.dayIndex);
-		await deleteLogLine(this.app, date, entry.lineIndex);
+		await deleteLogLine(this.app, date, entry.lineIndex, this.plugin.settings);
 		await this.refresh();
 	}
 }
