@@ -33,8 +33,10 @@ The plugin is a thin renderer: change frontmatter / Bases config / drag → Base
 - **Start / end** date properties chosen in view options; `scale` = day / week / month / quarter / year (coarser scales keep multi‑year plans on screen).
 - **Lanes follow Bases group‑by** (one lane per group) or a flat list when ungrouped.
 - Bars for start+end, **milestone** dots for a single end, label‑only for no dates.
-- Vertical grid lines per cell so you can read how many cells a bar spans; a padded time window (≈3 months/weeks around the data) and auto‑scroll to today.
-- **Drag** the bar to shift both dates, drag an edge to change one end (writeback to `note.*`).
+- **Multi‑tier header** — a stacked, cumulative header (year → quarter → month → week → day, coarsest on top); each cell shows only its own unit, centered, and grid lines follow the finest tier.
+- **Size** — bar width in px per cell; `fit` fills the whole range to the pane, higher values zoom in.
+- **Padding** — empty time shown around the items: `default` (unchanged), `moderate`, or `fit` (trim to the items). Partial first/last cells are widened just enough for their header label to fit.
+- **Drag** the bar to shift both dates, drag an edge to change one end (writeback to `note.*`). With **Snap to grid** (a plugin setting) on, drag/resize snaps to the current scale's unit — drag only; existing dates are never changed otherwise.
 
 ![Timeline grouped into lanes by a Bases group‑by (Alpha / Beta / Gamma / Personal) at day scale, with Gantt bars and orange milestone diamonds for single‑date tasks; ungrouped views render a flat list instead](docs/images/timeline-2.png)
 
@@ -81,7 +83,7 @@ Outputs `main.js` (+ `manifest.json`, `styles.css`) in the project root.
    - Kanban: set **Group by** (e.g. `status`); optionally enable **Use predefined columns** and fill the column values / colours / done statuses / archive value.
    - Timeline: pick the **start / end** date properties and a **scale**.
 3. The calendar stores entries in your daily notes, so it needs the core **Daily notes** plugin enabled (Settings → Core plugins → Daily notes). Run the command **Open weekly log** (or the ribbon clock icon); you can turn the view off under **Settings → Task Manager Bases View**.
-4. Global, cross‑file conventions (week start, day window, log section, categories, back‑reference) live in **Settings → Task Manager Bases View**. The daily‑note folder, filename format and template are taken from the core **Daily notes** plugin (Settings → Core plugins → Daily notes) — no duplicate config here.
+4. Global, cross‑file conventions (week start, day window, log section, categories, back‑reference, timeline snap‑to‑grid) live in **Settings → Task Manager Bases View**. The daily‑note folder, filename format and template are taken from the core **Daily notes** plugin (Settings → Core plugins → Daily notes) — no duplicate config here.
 
 > Toggling a view on/off in settings takes effect only after you disable and re‑enable the plugin (or restart Obsidian) — Bases has no per‑view unregister API.
 
@@ -98,7 +100,9 @@ Each view can be turned off independently, and the calendar's settings appear on
 | kanban | `doneStatuses` | Column values treated as “done” (gets the archive‑all action). |
 | kanban | `archiveValue` | Value written by right‑click → Archive / Archive‑all. |
 | timeline | `startProp` / `endProp` | Date properties for the bar ends. |
-| timeline | `scale` | `day` / `week` / `month` / `quarter` / `year`. |
+| timeline | `scale` | Header tick granularity: `day` / `week` / `month` / `quarter` / `year`. |
+| timeline | `rangePadding` | Empty time around the items: `default` / `moderate` / `fit`. |
+| timeline | `cellSize` | Bar width: `fit` (fill the pane) … px per cell. |
 
 ## Example vault
 
