@@ -13,6 +13,9 @@ export interface TaskManagerSettings {
 	enableTimeline: boolean;
 	enableCalendar: boolean;
 
+	/** Timeline: drag/resize snaps to the current scale's grid unit (drag only). */
+	snapToGrid: boolean;
+
 	/** Calendar-only, cross-file conventions. */
 	/**
 	 * Whether to show the daily-notes config reminder when the calendar opens.
@@ -47,6 +50,7 @@ export const DEFAULT_SETTINGS: TaskManagerSettings = {
 	// this true so an update never removes the ribbon/command from existing users
 	// who used the calendar on defaults without ever persisting settings.
 	enableCalendar: true,
+	snapToGrid: false,
 	dailyNotesReminder: true,
 	weekStart: "monday",
 	logSection: "Log",
@@ -100,6 +104,7 @@ export class TaskManagerSettingTab extends PluginSettingTab {
 				d
 					.addOption("en", "English")
 					.addOption("zh", "中文")
+					.addOption("de", "Deutsch")
 					.setValue(this.plugin.settings.language)
 					.onChange(async (v) => {
 						this.plugin.settings.language = v as Lang;
@@ -132,6 +137,17 @@ export class TaskManagerSettingTab extends PluginSettingTab {
 				}),
 			);
 		reloadNotice(timeline);
+
+		// Timeline snap-to-grid is read live by open timelines (drag only), no reload.
+		new Setting(containerEl)
+			.setName(t("setSnap"))
+			.setDesc(t("setSnapDesc"))
+			.addToggle((tg) =>
+				tg.setValue(this.plugin.settings.snapToGrid).onChange(async (v) => {
+					this.plugin.settings.snapToGrid = v;
+					await this.plugin.saveSettings();
+				}),
+			);
 
 		// Calendar entry points toggle live — no plugin reload needed, so no notice.
 		new Setting(containerEl)

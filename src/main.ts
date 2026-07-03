@@ -31,7 +31,7 @@ export default class TaskManagerPlugin extends Plugin {
 			const ok = this.registerBasesView(TM_TIMELINE_VIEW, {
 				name: "Timeline",
 				icon: "gantt-chart",
-				factory: (controller, containerEl) => new TimelineView(controller, containerEl),
+				factory: (controller, containerEl) => new TimelineView(controller, containerEl, this),
 				options: timelineViewOptions,
 			});
 			if (!ok) new Notice(t("timelineRegisterFail"));

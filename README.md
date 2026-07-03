@@ -30,7 +30,7 @@ The plugin is a thin renderer: change frontmatter / Bases config / drag → Base
 ![Kanban board with predefined columns (Backlog / Todo / In Progress / Blocked / Done / Cancelled), each softly tinted; cards show their properties as name: value rows beneath a divider under the title, and the Done column offers an archive‑all action](docs/images/kanban-2.png)
 
 ### Timeline (`tm-timeline`)
-- **Start / end** date properties chosen in view options; `scale` = day / week / month.
+- **Start / end** date properties chosen in view options; `scale` = day / week / month / quarter / year (coarser scales keep multi‑year plans on screen).
 - **Lanes follow Bases group‑by** (one lane per group) or a flat list when ungrouped.
 - Bars for start+end, **milestone** dots for a single end, label‑only for no dates.
 - Vertical grid lines per cell so you can read how many cells a bar spans; a padded time window (≈3 months/weeks around the data) and auto‑scroll to today.
@@ -98,7 +98,7 @@ Each view can be turned off independently, and the calendar's settings appear on
 | kanban | `doneStatuses` | Column values treated as “done” (gets the archive‑all action). |
 | kanban | `archiveValue` | Value written by right‑click → Archive / Archive‑all. |
 | timeline | `startProp` / `endProp` | Date properties for the bar ends. |
-| timeline | `scale` | `day` / `week` / `month`. |
+| timeline | `scale` | `day` / `week` / `month` / `quarter` / `year`. |
 
 ## Example vault
 

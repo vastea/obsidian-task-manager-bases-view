@@ -136,27 +136,29 @@
 		const e = effEnd;
 		if (kind === "bar" && s && e) {
 			if (mode === "move") {
-				const ns = addDays(s, delta);
-				const ne = addDays(e, delta);
+				// Snap the start to the grid, then shift the end by the same amount
+				// so the bar keeps its duration.
+				const ns = context.snap(addDays(s, delta));
+				const ne = addDays(e, dayDiff(ns, s));
 				context.write(row.file, { start: ns, end: ne });
 				setPending(ns, ne);
 			} else if (mode === "start") {
-				let ns = addDays(s, delta);
+				let ns = context.snap(addDays(s, delta));
 				if (ns > e) ns = e;
 				context.write(row.file, { start: ns });
 				setPending(ns, e);
 			} else if (mode === "end") {
-				let ne = addDays(e, delta);
+				let ne = context.snap(addDays(e, delta));
 				if (ne < s) ne = s;
 				context.write(row.file, { end: ne });
 				setPending(s, ne);
 			}
 		} else if (kind === "milestone-start" && s) {
-			const ns = addDays(s, delta);
+			const ns = context.snap(addDays(s, delta));
 			context.write(row.file, { start: ns });
 			setPending(ns, null);
 		} else if (kind === "milestone-end" && e) {
-			const ne = addDays(e, delta);
+			const ne = context.snap(addDays(e, delta));
 			context.write(row.file, { end: ne });
 			setPending(null, ne);
 		}

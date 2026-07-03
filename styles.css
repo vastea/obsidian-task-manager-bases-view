@@ -339,8 +339,40 @@
 
 .tm-tl-axis {
 	position: relative;
-	height: 28px;
+	display: flex;
+	flex-direction: column;
 	flex: 0 0 auto;
+}
+
+/* One header row per granularity level (year / quarter / month / …). */
+.tm-tl-tier {
+	position: relative;
+	height: 22px;
+	width: 100%;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+.tm-tl-tier:last-child {
+	border-bottom: none;
+}
+.tm-tl-seg {
+	position: absolute;
+	top: 0;
+	height: 100%;
+	border-left: 1px solid var(--background-modifier-border);
+	/* Let a narrow edge cell's label overflow instead of inflating every column. */
+	overflow: visible;
+	white-space: nowrap;
+	box-sizing: border-box;
+}
+.tm-tl-seg-label {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 3px;
+	text-align: center;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	white-space: nowrap;
 }
 
 .tm-tl-tick {

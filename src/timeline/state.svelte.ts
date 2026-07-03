@@ -1,6 +1,6 @@
 import type { BasesPropertyId, RenderContext, TFile } from "obsidian";
 
-export type TimelineScale = "day" | "week" | "month";
+export type TimelineScale = "day" | "week" | "month" | "quarter" | "year";
 
 export interface TimelineRow {
 	file: TFile;
@@ -16,12 +16,18 @@ export interface TimelineLane {
 	rows: TimelineRow[];
 }
 
-export interface TimelineAxisTick {
+/** A labelled span within one header tier (e.g. a single month or quarter). */
+export interface TimelineAxisSegment {
 	label: string;
-	/** Day offset from rangeStart. */
+	/** Day offset of the segment start from rangeStart. */
 	dayOffset: number;
-	/** Emphasised tick (e.g. month boundary). */
-	major: boolean;
+	/** Segment length in days. */
+	days: number;
+}
+
+/** One header row. Tiers stack coarsest-first (year, quarter, month, …). */
+export interface TimelineAxisTier {
+	segments: TimelineAxisSegment[];
 }
 
 export interface TimelineContext {
@@ -32,17 +38,21 @@ export interface TimelineContext {
 	openDetail: (file: TFile, evt: MouseEvent | KeyboardEvent) => void;
 	/** Persist new start/end for a row (only provided ends are written). */
 	write: (file: TFile, changes: { start?: Date | null; end?: Date | null }) => void;
+	/** Snap a date to the current grid unit (identity when snapping is off). */
+	snap: (d: Date) => Date;
 }
 
 export interface TimelineState {
 	hasRange: boolean;
 	scale: TimelineScale;
+	/** Uniform px/day density (computed in the view: labels-fit, pane-fit, size). */
 	pxPerDay: number;
 	rangeStart: Date;
 	totalDays: number;
 	/** Day offset of "today" from rangeStart (for initial scroll). */
 	todayOffset: number;
-	ticks: TimelineAxisTick[];
+	/** Stacked header rows (coarsest first), one per granularity level. */
+	tiers: TimelineAxisTier[];
 	lanes: TimelineLane[];
 	context: TimelineContext | null;
 	message: string | null;
@@ -51,11 +61,11 @@ export interface TimelineState {
 const EMPTY: TimelineState = {
 	hasRange: false,
 	scale: "week",
-	pxPerDay: 24,
+	pxPerDay: 1,
 	rangeStart: new Date(),
 	totalDays: 0,
 	todayOffset: 0,
-	ticks: [],
+	tiers: [],
 	lanes: [],
 	context: null,
 	message: null,
