@@ -1,6 +1,20 @@
 <script lang="ts">
+	import { setTooltip } from "obsidian";
 	import type { TimelineContext, TimelineRow } from "./state.svelte";
 	import { addDays, dayDiff } from "../shared/date-util";
+
+	// Obsidian's tooltip instead of the native `title`: it binds to the whole
+	// element (child handles/label bubble up), shows app-native, and appears
+	// promptly — the native `title` had a ~1s delay and its timer reset whenever
+	// the pointer crossed between the bar's inner elements, so it barely triggered.
+	function tooltip(el: HTMLElement, text: string) {
+		setTooltip(el, text, { delay: 300 });
+		return {
+			update(next: string) {
+				setTooltip(el, next, { delay: 300 });
+			},
+		};
+	}
 
 	let {
 		row,
@@ -183,7 +197,8 @@
 			style:width="{geom.width}px"
 			role="button"
 			tabindex="0"
-			title={row.title}
+			aria-label={row.title}
+			use:tooltip={row.title}
 			onpointerdown={(e) => startDrag("move", e)}
 			onclick={openOnClick}
 			onkeydown={(e) => (e.key === "Enter" ? context.openDetail(row.file, e) : null)}
@@ -201,7 +216,8 @@
 			style:left="{geom.left}px"
 			role="button"
 			tabindex="0"
-			title={row.title}
+			aria-label={row.title}
+			use:tooltip={row.title}
 			onpointerdown={(e) => startDrag("move", e)}
 			onclick={openOnClick}
 			onkeydown={(e) => (e.key === "Enter" ? context.openDetail(row.file, e) : null)}

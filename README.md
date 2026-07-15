@@ -34,8 +34,8 @@ The plugin is a thin renderer: change frontmatter / Bases config / drag → Base
 - **Lanes follow Bases group‑by** (one lane per group) or a flat list when ungrouped.
 - Bars for start+end, **milestone** dots for a single end, label‑only for no dates.
 - **Multi‑tier header** — a stacked, cumulative header (year → quarter → month → week → day, coarsest on top); each cell shows only its own unit, centered, and grid lines follow the finest tier.
-- **Size** — bar width in px per cell; `fit` fills the whole range to the pane, higher values zoom in.
-- **Padding** — empty time shown around the items: `default` (unchanged), `moderate`, or `fit` (trim to the items). Partial first/last cells are widened just enough for their header label to fit.
+- **Padding** — *which* time range is shown: `default` (unchanged), `moderate` (one whole scale unit each side), or `fit` (trim to whole scale units around the items). Partial first/last cells are widened just enough for their header label to fit.
+- **Zoom** — *how densely* that range is drawn (independent of padding). **Auto zoom** derives the density from the pane width so the whole range fits without horizontal scrolling; with it off, a **Zoom** slider sets the density as a percentage of the scale's default (100 % = the default look, higher values zoom in).
 - **Drag** the bar to shift both dates, drag an edge to change one end (writeback to `note.*`). With **Snap to grid** (a plugin setting) on, drag/resize snaps to the current scale's unit — drag only; existing dates are never changed otherwise.
 
 ![Timeline grouped into lanes by a Bases group‑by (Alpha / Beta / Gamma / Personal) at day scale, with Gantt bars and orange milestone diamonds for single‑date tasks; ungrouped views render a flat list instead](docs/images/timeline-2.png)
@@ -102,7 +102,8 @@ Each view can be turned off independently, and the calendar's settings appear on
 | timeline | `startProp` / `endProp` | Date properties for the bar ends. |
 | timeline | `scale` | Header tick granularity: `day` / `week` / `month` / `quarter` / `year`. |
 | timeline | `rangePadding` | Empty time around the items: `default` / `moderate` / `fit`. |
-| timeline | `cellSize` | Bar width: `fit` (fill the pane) … px per cell. |
+| timeline | `autoZoom` | Derive density from the pane width so the whole range fits (hides the zoom slider). |
+| timeline | `zoom` | Density as a percentage of the scale's default (10 – 200, 100 = default). |
 
 ## Example vault
 

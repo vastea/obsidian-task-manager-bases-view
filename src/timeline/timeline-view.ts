@@ -1,6 +1,7 @@
 import {
 	type BasesAllOptions,
 	type BasesEntry,
+	type BasesOptions,
 	type BasesViewConfig,
 	type QueryController,
 	BasesView,
@@ -33,11 +34,22 @@ import {
 
 export const TM_TIMELINE_VIEW = "tm-timeline";
 
-// Horizontal density (px per day) is derived from the size slider in the view;
-// see Timeline.svelte. `scale` only controls the tick granularity below.
+// Horizontal density (px per day) is computed in onDataUpdated below from the
+// scale's default density and the zoom slider (or the pane width when
+// "auto zoom" is on). `scale` only controls the tick granularity.
 
-export function timelineViewOptions(_config: BasesViewConfig): BasesAllOptions[] {
-	return [
+// Upstream density (px per day) per scale — what zoom = 100% renders at. The
+// day/week/month values are the unchanged upstream constants; quarter/year are
+// this plugin's additions.
+const PX_DEFAULT: Record<TimelineScale, number> = { day: 48, week: 22, month: 8, quarter: 3, year: 1 };
+
+// Cap the visible span per scale so a stray outlier date can't balloon the
+// track (and the per-day tier loop) to an unusable size. day/week/month are
+// the unchanged upstream caps; quarter/year get proportional ones (~40 units).
+const MAX_DAYS: Record<TimelineScale, number> = { day: 120, week: 560, month: 1460, quarter: 3660, year: 14600 };
+
+export function timelineViewOptions(config: BasesViewConfig): BasesAllOptions[] {
+	const options: BasesAllOptions[] = [
 		{
 			type: "group",
 			displayName: t("optDates"),
@@ -82,17 +94,33 @@ export function timelineViewOptions(_config: BasesViewConfig): BasesAllOptions[]
 				fit: t("rangeFit"),
 			},
 		},
+	];
+	// Zoom controls density only — independent of the "padding: fit" range option:
+	// padding picks WHICH range is shown, zoom picks HOW densely it is drawn. With
+	// "auto zoom" on the density is computed from the pane width, so the manual
+	// slider is meaningless and only offered when auto zoom is off.
+	const zoomItems: BasesOptions[] = [
 		{
-			type: "slider",
-			key: "cellSize",
-			displayName: t("optSize"),
-			default: 180,
-			min: 0,
-			max: 180,
-			step: 4,
-			instant: true,
+			type: "toggle",
+			key: "autoZoom",
+			displayName: t("optAutoZoom"),
+			default: false,
 		},
 	];
+	if (config.get("autoZoom") !== true) {
+		zoomItems.push({
+			type: "slider",
+			key: "zoom",
+			displayName: t("optZoom"),
+			default: 100,
+			min: 10,
+			max: 200,
+			step: 5,
+			instant: true,
+		});
+	}
+	options.push({ type: "group", displayName: t("optZoom"), items: zoomItems });
+	return options;
 }
 
 export class TimelineView extends BasesView {
@@ -136,15 +164,16 @@ export class TimelineView extends BasesView {
 		const startProp = this.config.getAsPropertyId("startProp");
 		const endProp = this.config.getAsPropertyId("endProp");
 		const scale = ((this.config.get("scale") as TimelineScale | undefined) ?? "week");
-		const rawCell = this.config.get("cellSize");
-		// "fit" (stored as a readable string) and 0 both mean fit.
-		const cellSize = rawCell == null ? 180 : rawCell === "fit" ? 0 : Number(rawCell);
+		const autoZoom = this.config.get("autoZoom") === true;
+		const rawZoom = this.config.get("zoom");
+		// Zoom is a percentage of the scale's default density; 100 = upstream look.
+		const zoom = rawZoom == null ? 100 : Number(rawZoom);
 		const rangePadding = (this.config.get("rangePadding") as string | undefined) ?? "default";
-		// Keep the .base clean/readable: drop defaults (max → removed → falls back to
-		// the option default) and store the fit end as "fit" instead of 0.
+		// Keep the .base clean/readable: drop values that equal the option defaults
+		// (removed → falls back to the option default).
 		if (this.config.get("rangePadding") === "default") this.config.set("rangePadding", null);
-		if (rawCell === 0) this.config.set("cellSize", "fit");
-		else if (rawCell != null && rawCell !== "fit" && Number(rawCell) === 180) this.config.set("cellSize", null);
+		if (this.config.get("autoZoom") === false) this.config.set("autoZoom", null);
+		if (rawZoom != null && zoom === 100) this.config.set("zoom", null);
 
 		const writeEnabled = isWritable(startProp) && isWritable(endProp);
 		const context: TimelineContext = {
@@ -160,14 +189,7 @@ export class TimelineView extends BasesView {
 					void writeProperty(this.app, file, endProp, changes.end ? formatISODate(changes.end) : null);
 				}
 			},
-			snap: (d) => {
-				if (!this.plugin.settings.snapToGrid) return d;
-				if (scale === "year") return new Date(d.getFullYear(), 0, 1);
-				if (scale === "quarter") return new Date(d.getFullYear(), Math.floor(d.getMonth() / 3) * 3, 1);
-				if (scale === "month") return startOfMonth(d);
-				if (scale === "week") return startOfWeekMonday(d);
-				return startOfDay(d);
-			},
+			snap: (d) => (this.plugin.settings.snapToGrid ? startOfUnit(d, scale) : d),
 		};
 
 		if (!startProp && !endProp) {
@@ -233,56 +255,35 @@ export class TimelineView extends BasesView {
 		let rangeStart: Date;
 		let rangeEnd: Date;
 		if (rangePadding === "fit") {
-			// Trim to exactly the item span (rounded to the scale unit).
-			if (scale === "day") {
-				rangeStart = startOfDay(min);
-				rangeEnd = startOfDay(max);
-			} else if (scale === "week") {
-				rangeStart = startOfWeekMonday(min);
-				rangeEnd = addDays(startOfWeekMonday(max), 6);
-			} else {
-				rangeStart = startOfMonth(min);
-				rangeEnd = endOfMonth(max);
-			}
+			// Trim to exactly the item span, aligned to whole scale units.
+			rangeStart = startOfUnit(min, scale);
+			rangeEnd = endOfUnit(max, scale);
 		} else if (rangePadding === "moderate") {
-			// Light padding, aligned to the unit.
-			if (scale === "day") {
-				rangeStart = addDays(min, -3);
-				rangeEnd = addDays(max, 6);
-			} else if (scale === "week") {
-				rangeStart = addDays(startOfWeekMonday(min), -7);
-				rangeEnd = addDays(startOfWeekMonday(max), 13);
-			} else if (scale === "quarter") {
-				rangeStart = addMonths(startOfMonth(min), -(min.getMonth() % 3));
-				rangeEnd = endOfMonth(addMonths(startOfMonth(max), 2 - (max.getMonth() % 3)));
-			} else if (scale === "year") {
-				rangeStart = addMonths(startOfMonth(min), -min.getMonth());
-				rangeEnd = endOfMonth(addMonths(startOfMonth(max), 11 - max.getMonth()));
-			} else {
-				rangeStart = addMonths(startOfMonth(min), -1);
-				rangeEnd = endOfMonth(addMonths(startOfMonth(max), 1));
-			}
+			// The fit span plus one whole unit of padding on each side.
+			rangeStart = addUnits(min, scale, -1);
+			rangeEnd = endOfUnit(addUnits(max, scale, 1), scale);
+		} else if (scale === "week") {
+			// "default": the unchanged upstream padding per scale (day/week/month).
+			rangeStart = addDays(startOfWeekMonday(min), -3 * 7);
+			rangeEnd = addDays(startOfWeekMonday(max), 3 * 7 + 6);
+		} else if (scale === "day") {
+			rangeStart = addDays(min, -7);
+			rangeEnd = addDays(max, 14);
+		} else if (scale === "month") {
+			rangeStart = addMonths(startOfMonth(min), -3);
+			rangeEnd = endOfMonth(addMonths(startOfMonth(max), 3));
 		} else {
-			// "default": the unchanged upstream padding (day/week/month). The new
-			// quarter/year scales have no upstream window, so they get a sensible one.
-			if (scale === "week") {
-				rangeStart = addDays(startOfWeekMonday(min), -3 * 7);
-				rangeEnd = addDays(startOfWeekMonday(max), 3 * 7 + 6);
-			} else if (scale === "day") {
-				rangeStart = addDays(min, -7);
-				rangeEnd = addDays(max, 14);
-			} else if (scale === "year") {
-				rangeStart = addMonths(startOfMonth(min), -min.getMonth());
-				rangeEnd = endOfMonth(addMonths(startOfMonth(max), 11 - max.getMonth()));
-			} else {
-				// month & quarter → ±3 months, like the upstream month window.
-				rangeStart = addMonths(startOfMonth(min), -3);
-				rangeEnd = endOfMonth(addMonths(startOfMonth(max), 3));
-			}
+			// The new quarter/year scales have no upstream window → moderate's.
+			rangeStart = addUnits(min, scale, -1);
+			rangeEnd = endOfUnit(addUnits(max, scale, 1), scale);
 		}
-		// Cover the whole padded span so the header/grid always reach as far as the
-		// bars (no capping — at "fit" the density shrinks to keep it on screen).
+		// Upstream outlier guard: cap the span so one stray date can't balloon the
+		// track to an unusable width (keeps the start, trims the far tail).
 		let totalDays = Math.max(1, dayDiff(rangeEnd, rangeStart) + 1);
+		if (totalDays > MAX_DAYS[scale]) {
+			totalDays = MAX_DAYS[scale];
+			rangeEnd = addDays(rangeStart, totalDays - 1);
+		}
 		let tiers = buildTiers(rangeStart, totalDays, scale);
 
 		// Uniform density: the widest label in each tier must fit a full unit cell
@@ -298,23 +299,20 @@ export class TimelineView extends BasesView {
 			minPxPerDay = Math.max(minPxPerDay, widest / DAYS_PER_UNIT[unit]);
 		});
 
-		// Size slider maps 0 = fit (labels-fit / pane-fit) → 100 = the original
-		// upstream density per scale. The tooltip's 0..100 is that interpolation.
+		// Density: with "auto zoom" on it is derived from the pane width (the whole
+		// range fills the pane); otherwise it is the scale's default density scaled
+		// linearly by the zoom slider, so the mapping is strictly monotonic (bigger
+		// zoom → bigger cells) and 100% reproduces the upstream look. Both are
+		// floored by what labels need. Density is independent of rangePadding:
+		// padding decides which range is shown, auto/zoom only how densely it is drawn.
 		const LABEL_WIDTH = 180;
-		const MAX_CELL = 180;
-		const PX_ORIG: Record<TimelineScale, number> = { day: 48, week: 22, month: 8, quarter: 3, year: 1 };
 		const viewportWidth = this.containerEl.clientWidth;
 		const densityFor = (tot: number): number => {
-			// MAX = the original upstream density per scale.
-			if (cellSize >= MAX_CELL) return Math.max(minPxPerDay, PX_ORIG[scale]);
-			// 0 = fit: fill the pane (never below what labels need).
-			if (cellSize <= 0) {
+			if (autoZoom) {
 				const fit = tot > 0 && viewportWidth > LABEL_WIDTH ? (viewportWidth - LABEL_WIDTH) / tot : 0;
 				return Math.max(minPxPerDay, fit);
 			}
-			// Explicit target px per cell — only floored by the label minimum so every
-			// slider step has an effect (no fit-to-pane dead zone at the low end).
-			return Math.max(minPxPerDay, cellSize / DAYS_PER_UNIT[scale]);
+			return Math.max(minPxPerDay, (PX_DEFAULT[scale] * zoom) / 100);
 		};
 		let pxPerDay = densityFor(totalDays);
 
@@ -361,6 +359,30 @@ export class TimelineView extends BasesView {
 const DAYS_PER_UNIT: Record<TimelineScale, number> = { day: 1, week: 7, month: 30.44, quarter: 91.31, year: 365.25 };
 // Rough on-screen width (px) of a header label — proportional font, so an estimate.
 const labelPx = (s: string) => s.length * 6.5 + 8;
+
+/** First day of the scale unit containing d (also the snap-to-grid target). */
+function startOfUnit(d: Date, scale: TimelineScale): Date {
+	if (scale === "year") return new Date(d.getFullYear(), 0, 1);
+	if (scale === "quarter") return new Date(d.getFullYear(), Math.floor(d.getMonth() / 3) * 3, 1);
+	if (scale === "month") return startOfMonth(d);
+	if (scale === "week") return startOfWeekMonday(d);
+	return startOfDay(d);
+}
+
+/** Start of the unit n whole units away from the one containing d. */
+function addUnits(d: Date, scale: TimelineScale, n: number): Date {
+	const s = startOfUnit(d, scale);
+	if (scale === "year") return new Date(s.getFullYear() + n, 0, 1);
+	if (scale === "quarter") return addMonths(s, 3 * n);
+	if (scale === "month") return addMonths(s, n);
+	if (scale === "week") return addDays(s, 7 * n);
+	return addDays(s, n);
+}
+
+/** Last day of the scale unit containing d. */
+function endOfUnit(d: Date, scale: TimelineScale): Date {
+	return addDays(addUnits(d, scale, 1), -1);
+}
 
 // Stacked header rows. Levels accumulate with granularity: year → +quarter →
 // +month → +week → +day, coarsest on top. Each tier groups consecutive days
