@@ -122,6 +122,7 @@ const dict = {
 	optEndProp: { en: "End date property", zh: "结束日期属性", de: "Enddatum-Eigenschaft" },
 	optProperty: { en: "Property", zh: "属性", de: "Eigenschaft" },
 	optScale: { en: "Scale", zh: "刻度", de: "Skala" },
+	optSize: { en: "Size", zh: "大小", de: "Größe" },
 	optZoom: { en: "Zoom (%)", zh: "缩放 (%)", de: "Zoom (%)" },
 	optAutoZoom: { en: "Auto zoom", zh: "自动缩放", de: "Auto-Zoom" },
 	optPadding: { en: "Padding", zh: "内边距", de: "Polsterung" },

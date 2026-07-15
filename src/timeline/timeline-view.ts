@@ -1,7 +1,6 @@
 import {
 	type BasesAllOptions,
 	type BasesEntry,
-	type BasesOptions,
 	type BasesViewConfig,
 	type QueryController,
 	BasesView,
@@ -83,43 +82,45 @@ export function timelineViewOptions(config: BasesViewConfig): BasesAllOptions[] 
 				year: t("scaleYear"),
 			},
 		},
+		// "Size" bundles the view-sizing controls: padding picks WHICH time range
+		// is shown, zoom picks HOW densely it is drawn (the two are independent).
+		// With "auto zoom" on the density is computed from the pane width, so the
+		// manual slider is meaningless — hidden live via shouldHide.
 		{
-			type: "dropdown",
-			key: "rangePadding",
-			displayName: t("optPadding"),
-			default: "default",
-			options: {
-				default: t("rangeDefault"),
-				moderate: t("rangeModerate"),
-				fit: t("rangeFit"),
-			},
+			type: "group",
+			displayName: t("optSize"),
+			items: [
+				{
+					type: "dropdown",
+					key: "rangePadding",
+					displayName: t("optPadding"),
+					default: "default",
+					options: {
+						default: t("rangeDefault"),
+						moderate: t("rangeModerate"),
+						fit: t("rangeFit"),
+					},
+				},
+				{
+					type: "toggle",
+					key: "autoZoom",
+					displayName: t("optAutoZoom"),
+					default: false,
+				},
+				{
+					type: "slider",
+					key: "zoom",
+					displayName: t("optZoom"),
+					default: 100,
+					min: 10,
+					max: 200,
+					step: 5,
+					instant: true,
+					shouldHide: () => config.get("autoZoom") === true,
+				},
+			],
 		},
 	];
-	// Zoom controls density only — independent of the "padding: fit" range option:
-	// padding picks WHICH range is shown, zoom picks HOW densely it is drawn. With
-	// "auto zoom" on the density is computed from the pane width, so the manual
-	// slider is meaningless and only offered when auto zoom is off.
-	const zoomItems: BasesOptions[] = [
-		{
-			type: "toggle",
-			key: "autoZoom",
-			displayName: t("optAutoZoom"),
-			default: false,
-		},
-	];
-	if (config.get("autoZoom") !== true) {
-		zoomItems.push({
-			type: "slider",
-			key: "zoom",
-			displayName: t("optZoom"),
-			default: 100,
-			min: 10,
-			max: 200,
-			step: 5,
-			instant: true,
-		});
-	}
-	options.push({ type: "group", displayName: t("optZoom"), items: zoomItems });
 	return options;
 }
 
