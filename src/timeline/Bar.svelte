@@ -68,6 +68,11 @@
 	const outsideBefore = $derived(!!firstDate && context.isOutside(firstDate) && firstOffset === 0);
 	const outsideAfter = $derived(!!lastDate && context.isOutside(lastDate) && lastOffset === totalUnits);
 	const outside = $derived(outsideBefore || outsideAfter);
+
+	// A gesture takes its delta from one end's date. A clamped one is not where
+	// the item is, so that gesture is off the table.
+	const startClamped = $derived(!!firstDate && context.isOutside(firstDate));
+	const endClamped = $derived(!!lastDate && context.isOutside(lastDate));
 	const dates = $derived(
 		[effStart, effEnd].filter((d): d is Date => d !== null).map(formatISODate).join(" – "),
 	);
@@ -139,6 +144,7 @@
 
 	function startDrag(mode: Mode, event: PointerEvent) {
 		if (!context.writeEnabled) return;
+		if (mode === "end" ? endClamped : startClamped) return;
 		event.preventDefault();
 		event.stopPropagation();
 		dragMode = mode;
@@ -231,6 +237,7 @@
 			class="tm-bar"
 			class:is-dragging={dragMode !== null}
 			class:is-outside={outside}
+			class:is-start-clamped={startClamped}
 			class:is-outside-after={outsideAfter}
 			style:left={geom.left != null ? `${geom.left}px` : null}
 			style:right={geom.right != null ? `${geom.right}px` : null}
@@ -243,8 +250,10 @@
 			onclick={openOnClick}
 			onkeydown={(e) => (e.key === "Enter" ? context.openDetail(row.file, e) : null)}
 		>
-			{#if context.writeEnabled}
+			{#if context.writeEnabled && !startClamped}
 				<span class="tm-bar-handle tm-bar-handle-start" role="presentation" onpointerdown={(e) => startDrag("start", e)}></span>
+			{/if}
+			{#if context.writeEnabled && !endClamped}
 				<span class="tm-bar-handle tm-bar-handle-end" role="presentation" onpointerdown={(e) => startDrag("end", e)}></span>
 			{/if}
 			{#if outsideBefore}
@@ -263,6 +272,7 @@
 			class="tm-milestone"
 			class:is-dragging={dragMode !== null}
 			class:is-outside={outside}
+			class:is-start-clamped={startClamped}
 			style:left={geom.left != null ? `${geom.left}px` : null}
 			style:right={geom.right != null ? `${geom.right}px` : null}
 			role="button"
