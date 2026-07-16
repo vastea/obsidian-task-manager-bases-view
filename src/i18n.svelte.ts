@@ -143,9 +143,9 @@ const dict = {
 	},
 	setSnap: { en: "Snap to grid (timeline)", zh: "对齐网格（时间线）", de: "Am Raster ausrichten (Timeline)" },
 	setSnapDesc: {
-		en: "When on, dragging or resizing a timeline bar snaps to the current scale's grid (month → month start, week → Monday, …). Existing dates are only changed when you drag.",
-		zh: "开启后，拖动或调整时间线条时对齐到当前刻度网格（月→月初，周→周一……）。仅在拖动时更改现有日期。",
-		de: "Wenn aktiviert, rastet das Ziehen oder Anpassen eines Timeline-Balkens am Raster der aktuellen Skala ein (Monat → Monatsanfang, Woche → Montag, …). Bestehende Daten werden nur beim Ziehen geändert.",
+		en: "When on, dragging or resizing a timeline bar snaps to the current scale's grid: a start date to the unit's first day (month → month start, week → Monday), an end date to its last, as end dates are inclusive. Existing dates are only changed when you drag.",
+		zh: "开启后，拖动或调整时间线条时对齐到当前刻度网格：开始日期对齐到单元的第一天（月→月初，周→周一），结束日期对齐到最后一天，因为结束日期为闭区间。仅在拖动时更改现有日期。",
+		de: "Wenn aktiviert, rastet das Ziehen oder Anpassen eines Timeline-Balkens am Raster der aktuellen Skala ein: ein Startdatum auf den ersten Tag der Einheit (Monat → Monatsanfang, Woche → Montag), ein Enddatum auf den letzten, da Enddaten inklusiv sind. Bestehende Daten werden nur beim Ziehen geändert.",
 	},
 	scaleDay: { en: "Day", zh: "日", de: "Tag" },
 	scaleWeek: { en: "Week", zh: "周", de: "Woche" },

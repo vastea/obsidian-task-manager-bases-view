@@ -164,9 +164,14 @@
 		window.addEventListener("pointerup", onUp);
 	}
 
-	/** The date `delta` scale units away from `d`. */
-	function shifted(d: Date, delta: number): Date {
+	/** The date `delta` scale units away from `d`, snapped as a start. */
+	function shiftedStart(d: Date, delta: number): Date {
 		return context.snap(context.dateAt(context.offsetOf(d) + delta));
+	}
+
+	/** The date `delta` scale units away from `d`, snapped as an inclusive end. */
+	function shiftedEnd(d: Date, delta: number): Date {
+		return context.snapEnd(context.dateAt(context.offsetOf(d) + delta));
 	}
 
 	function commit(mode: Mode, delta: number) {
@@ -179,31 +184,31 @@
 			if (mode === "move") {
 				// Snap the start to the grid, then shift the end by the same amount
 				// so the bar keeps its duration.
-				const ns = shifted(s, delta);
+				const ns = shiftedStart(s, delta);
 				if (sameDay(ns, s)) return;
 				const ne = addDays(e, dayDiff(ns, s));
 				context.write(row.file, { start: ns, end: ne });
 				setPending(ns, ne);
 			} else if (mode === "start") {
-				let ns = shifted(s, delta);
+				let ns = shiftedStart(s, delta);
 				if (ns > e) ns = e;
 				if (sameDay(ns, s)) return;
 				context.write(row.file, { start: ns });
 				setPending(ns, e);
 			} else if (mode === "end") {
-				let ne = shifted(e, delta);
+				let ne = shiftedEnd(e, delta);
 				if (ne < s) ne = s;
 				if (sameDay(ne, e)) return;
 				context.write(row.file, { end: ne });
 				setPending(s, ne);
 			}
 		} else if (kind === "milestone-start" && s) {
-			const ns = shifted(s, delta);
+			const ns = shiftedStart(s, delta);
 			if (sameDay(ns, s)) return;
 			context.write(row.file, { start: ns });
 			setPending(ns, null);
 		} else if (kind === "milestone-end" && e) {
-			const ne = shifted(e, delta);
+			const ne = shiftedEnd(e, delta);
 			if (sameDay(ne, e)) return;
 			context.write(row.file, { end: ne });
 			setPending(null, ne);

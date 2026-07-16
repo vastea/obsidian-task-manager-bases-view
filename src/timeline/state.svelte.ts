@@ -38,8 +38,10 @@ export interface TimelineContext {
 	openDetail: (file: TFile, evt: MouseEvent | KeyboardEvent) => void;
 	/** Persist new start/end for a row (only provided ends are written). */
 	write: (file: TFile, changes: { start?: Date | null; end?: Date | null }) => void;
-	/** Snap a date to the current grid unit (identity when snapping is off). */
+	/** Snap a start date to its grid unit's first day (identity when off). */
 	snap: (d: Date) => Date;
+	/** Snap an inclusive end date to its grid unit's last day (identity when off). */
+	snapEnd: (d: Date) => Date;
 	/** Offset of `d` from the range start, in scale units, clamped to the range. */
 	offsetOf: (d: Date) => number;
 	/** The date at `offset` scale units from the range start. */
