@@ -19,10 +19,10 @@ export interface TimelineLane {
 /** A labelled span within one header tier (e.g. a single month or quarter). */
 export interface TimelineAxisSegment {
 	label: string;
-	/** Day offset of the segment start from rangeStart. */
-	dayOffset: number;
-	/** Segment length in days. */
-	days: number;
+	/** Offset of the segment start from rangeStart, in scale units. */
+	unitOffset: number;
+	/** Segment length in scale units. */
+	units: number;
 }
 
 /** One header row. Tiers stack coarsest-first (year, quarter, month, …). */
@@ -40,16 +40,21 @@ export interface TimelineContext {
 	write: (file: TFile, changes: { start?: Date | null; end?: Date | null }) => void;
 	/** Snap a date to the current grid unit (identity when snapping is off). */
 	snap: (d: Date) => Date;
+	/** Offset of `d` from the range start, in scale units (fractional). */
+	offsetOf: (d: Date) => number;
+	/** The date at `offset` scale units from the range start. */
+	dateAt: (offset: number) => Date;
 }
 
 export interface TimelineState {
 	hasRange: boolean;
 	scale: TimelineScale;
-	/** Uniform px/day density (computed in the view: labels-fit, pane-fit, size). */
-	pxPerDay: number;
+	/** Uniform horizontal density: pixels per scale unit. */
+	pxPerUnit: number;
 	rangeStart: Date;
-	totalDays: number;
-	/** Day offset of "today" from rangeStart (for initial scroll). */
+	/** Length of the range in scale units. */
+	totalUnits: number;
+	/** Offset of "today" from rangeStart in scale units (for initial scroll). */
 	todayOffset: number;
 	/** Stacked header rows (coarsest first), one per granularity level. */
 	tiers: TimelineAxisTier[];
@@ -61,9 +66,9 @@ export interface TimelineState {
 const EMPTY: TimelineState = {
 	hasRange: false,
 	scale: "week",
-	pxPerDay: 1,
+	pxPerUnit: 1,
 	rangeStart: new Date(),
-	totalDays: 0,
+	totalUnits: 0,
 	todayOffset: 0,
 	tiers: [],
 	lanes: [],

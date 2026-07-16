@@ -1,12 +1,9 @@
 <script lang="ts">
 	import { setTooltip } from "obsidian";
 	import type { TimelineContext, TimelineRow } from "./state.svelte";
-	import { addDays, dayDiff } from "../shared/date-util";
+	import { addDays, dayDiff, sameDay } from "../shared/date-util";
 
-	// Obsidian's tooltip instead of the native `title`: it binds to the whole
-	// element (child handles/label bubble up), shows app-native, and appears
-	// promptly — the native `title` had a ~1s delay and its timer reset whenever
-	// the pointer crossed between the bar's inner elements, so it barely triggered.
+	/** Show `text` as an Obsidian tooltip while the pointer is over `el`. */
 	function tooltip(el: HTMLElement, text: string) {
 		setTooltip(el, text, { delay: 300 });
 		return {
@@ -18,15 +15,15 @@
 
 	let {
 		row,
-		rangeStart,
-		pxPerDay,
+		pxPerUnit,
 		context,
-	}: { row: TimelineRow; rangeStart: Date; pxPerDay: number; context: TimelineContext } = $props();
+	}: { row: TimelineRow; pxPerUnit: number; context: TimelineContext } = $props();
 
 	type Mode = "move" | "start" | "end";
 
 	let dragMode = $state<Mode | null>(null);
-	let dragDeltaDays = $state(0);
+	/** Live drag offset, in scale units. */
+	let dragDelta = $state(0);
 	// True once the pointer moves past a small threshold → treat as drag, not click.
 	let pointerMoved = false;
 	const DRAG_THRESHOLD_PX = 4;
@@ -50,11 +47,12 @@
 		effStart && effEnd ? "bar" : effStart ? "milestone-start" : effEnd ? "milestone-end" : "none",
 	);
 
-	// Base geometry from the effective dates (without the live drag preview).
-	const baseStartDay = $derived(effStart ? dayDiff(effStart, rangeStart) : null);
-	const baseEndDay = $derived(effEnd ? dayDiff(effEnd, rangeStart) : null);
+	// Base geometry from the effective dates (without the live drag preview). The
+	// end offset is the day *after* the end date, so the bar covers that day.
+	const baseStart = $derived(effStart ? context.offsetOf(effStart) : null);
+	const baseEnd = $derived(effEnd ? context.offsetOf(addDays(effEnd, 1)) : null);
 
-	const geom = $derived(computeGeom(kind, baseStartDay, baseEndDay, dragMode, dragDeltaDays, pxPerDay));
+	const geom = $derived(computeGeom(kind, baseStart, baseEnd, dragMode, dragDelta, pxPerUnit));
 
 	// Re-runs whenever the row's dates change (each query update yields fresh Date
 	// objects). Once the persisted data lands, release the optimistic hold so the
@@ -108,11 +106,11 @@
 			} else if (mode === "end") {
 				end = Math.max(e + delta, s);
 			}
-			return { left: start * px, width: Math.max(px, (end - start + 1) * px) };
+			return { left: start * px, width: Math.max(1, (end - start) * px) };
 		}
 		// Milestone: single point.
-		const day = (s ?? e ?? 0) + (mode === "move" ? delta : 0);
-		return { left: day * px, width: px };
+		const at = (s ?? e ?? 0) + (mode === "move" ? delta : 0);
+		return { left: at * px, width: px };
 	}
 
 	function startDrag(mode: Mode, event: PointerEvent) {
@@ -120,26 +118,31 @@
 		event.preventDefault();
 		event.stopPropagation();
 		dragMode = mode;
-		dragDeltaDays = 0;
+		dragDelta = 0;
 		pointerMoved = false;
 		const startX = event.clientX;
 
 		const onMove = (e: PointerEvent) => {
 			const dx = e.clientX - startX;
 			if (Math.abs(dx) > DRAG_THRESHOLD_PX) pointerMoved = true;
-			// Don't shift by a whole day until the gesture is a real drag, so a
-			// still press (select) doesn't jitter the bar by a cell.
-			dragDeltaDays = pointerMoved ? Math.round(dx / pxPerDay) : 0;
+			// Don't shift until the gesture is a real drag, so a still press
+			// (select) doesn't jitter the bar.
+			dragDelta = pointerMoved ? dx / pxPerUnit : 0;
 		};
 		const onUp = () => {
 			window.removeEventListener("pointermove", onMove);
 			window.removeEventListener("pointerup", onUp);
-			commit(mode, dragDeltaDays);
+			commit(mode, dragDelta);
 			dragMode = null;
-			dragDeltaDays = 0;
+			dragDelta = 0;
 		};
 		window.addEventListener("pointermove", onMove);
 		window.addEventListener("pointerup", onUp);
+	}
+
+	/** The date `delta` scale units away from `d`. */
+	function shifted(d: Date, delta: number): Date {
+		return context.snap(context.dateAt(context.offsetOf(d) + delta));
 	}
 
 	function commit(mode: Mode, delta: number) {
@@ -152,27 +155,32 @@
 			if (mode === "move") {
 				// Snap the start to the grid, then shift the end by the same amount
 				// so the bar keeps its duration.
-				const ns = context.snap(addDays(s, delta));
+				const ns = shifted(s, delta);
+				if (sameDay(ns, s)) return;
 				const ne = addDays(e, dayDiff(ns, s));
 				context.write(row.file, { start: ns, end: ne });
 				setPending(ns, ne);
 			} else if (mode === "start") {
-				let ns = context.snap(addDays(s, delta));
+				let ns = shifted(s, delta);
 				if (ns > e) ns = e;
+				if (sameDay(ns, s)) return;
 				context.write(row.file, { start: ns });
 				setPending(ns, e);
 			} else if (mode === "end") {
-				let ne = context.snap(addDays(e, delta));
+				let ne = shifted(e, delta);
 				if (ne < s) ne = s;
+				if (sameDay(ne, e)) return;
 				context.write(row.file, { end: ne });
 				setPending(s, ne);
 			}
 		} else if (kind === "milestone-start" && s) {
-			const ns = context.snap(addDays(s, delta));
+			const ns = shifted(s, delta);
+			if (sameDay(ns, s)) return;
 			context.write(row.file, { start: ns });
 			setPending(ns, null);
 		} else if (kind === "milestone-end" && e) {
-			const ne = context.snap(addDays(e, delta));
+			const ne = shifted(e, delta);
+			if (sameDay(ne, e)) return;
 			context.write(row.file, { end: ne });
 			setPending(null, ne);
 		}

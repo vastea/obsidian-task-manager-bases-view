@@ -375,6 +375,17 @@
 	white-space: nowrap;
 }
 
+/* Off-screen probe: header labels shrink-wrapped so their width can be read. */
+.tm-tl-measure {
+	position: absolute;
+	visibility: hidden;
+	pointer-events: none;
+	white-space: nowrap;
+}
+.tm-tl-measure .tm-tl-seg-label {
+	position: static;
+}
+
 .tm-tl-tick {
 	position: absolute;
 	top: 0;

@@ -11,20 +11,18 @@
 	// Width of the sticky label gutter (see .tm-tl-corner / .tm-tl-rowlabel).
 	const LABEL_WIDTH = 180;
 
-	// Density is computed in the view (label-fit + pane-fit + size slider).
-	const pxPerDay = $derived(tl.pxPerDay);
-	const trackWidth = $derived(tl.totalDays * pxPerDay);
+	const pxPerUnit = $derived(tl.pxPerUnit);
+	const trackWidth = $derived(tl.totalUnits * pxPerUnit);
 
 	// Scroll to "today" once per range so the relevant window is in view.
 	$effect(() => {
-		// Only auto-scroll once per range (not when the size/density changes), so
-		// adjusting the size slider keeps the current scroll position.
+		// Once per range, so changing the density keeps the scroll position.
 		const key = `${tl.rangeStart.getTime()}`;
 		if (!scrollEl || !tl.hasRange || scrolledFor === key) return;
 		scrolledFor = key;
 		// When the whole track fits the pane there is nothing to scroll.
 		if (trackWidth <= scrollEl.clientWidth - LABEL_WIDTH) return;
-		const target = Math.max(0, tl.todayOffset * pxPerDay - 160);
+		const target = Math.max(0, tl.todayOffset * pxPerUnit - 160);
 		scrollEl.scrollLeft = target;
 	});
 </script>
@@ -38,8 +36,8 @@
 			<div class="tm-tl-content">
 				<!-- Full-height grid lines (per cell boundary) so bar spans are readable. -->
 				<div class="tm-tl-grid">
-					{#each tl.tiers[tl.tiers.length - 1]?.segments ?? [] as seg (seg.dayOffset)}
-						<div class="tm-tl-gridline" style:left="{seg.dayOffset * pxPerDay}px"></div>
+					{#each tl.tiers[tl.tiers.length - 1]?.segments ?? [] as seg (seg.unitOffset)}
+						<div class="tm-tl-gridline" style:left="{seg.unitOffset * pxPerUnit}px"></div>
 					{/each}
 				</div>
 				<div class="tm-tl-header">
@@ -47,11 +45,11 @@
 					<div class="tm-tl-axis" style:width="{trackWidth}px">
 						{#each tl.tiers as tier, ti (ti)}
 							<div class="tm-tl-tier">
-								{#each tier.segments as seg (seg.dayOffset)}
+								{#each tier.segments as seg (seg.unitOffset)}
 									<div
 										class="tm-tl-seg"
-										style:left="{seg.dayOffset * pxPerDay}px"
-										style:width="{seg.days * pxPerDay}px"
+										style:left="{seg.unitOffset * pxPerUnit}px"
+										style:width="{seg.units * pxPerUnit}px"
 									>
 										<span class="tm-tl-seg-label">{seg.label}</span>
 									</div>
@@ -79,12 +77,7 @@
 								{row.title}
 							</div>
 							<div class="tm-tl-track" style:width="{trackWidth}px">
-								<Bar
-									{row}
-									rangeStart={tl.rangeStart}
-									pxPerDay={pxPerDay}
-									context={ctx}
-								/>
+								<Bar {row} {pxPerUnit} context={ctx} />
 							</div>
 						</div>
 					{/each}
