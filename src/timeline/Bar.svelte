@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { setTooltip } from "obsidian";
 	import type { TimelineContext, TimelineRow } from "./state.svelte";
-	import { addDays, dayDiff, sameDay } from "../shared/date-util";
+	import { addDays, dayDiff, formatISODate, sameDay } from "../shared/date-util";
+	import { icon } from "../shared/icon";
+	import { t } from "../i18n.svelte";
 
 	/** Show `text` as an Obsidian tooltip while the pointer is over `el`. */
 	function tooltip(el: HTMLElement, text: string) {
@@ -16,10 +18,13 @@
 	let {
 		row,
 		pxPerUnit,
+		totalUnits,
 		context,
-	}: { row: TimelineRow; pxPerUnit: number; context: TimelineContext } = $props();
+	}: { row: TimelineRow; pxPerUnit: number; totalUnits: number; context: TimelineContext } = $props();
 
 	type Mode = "move" | "start" | "end";
+	/** Placement of a bar; an omitted width lets it shrink-wrap its label. */
+	type Geom = { left?: number; right?: number; width?: number };
 
 	let dragMode = $state<Mode | null>(null);
 	/** Live drag offset, in scale units. */
@@ -53,6 +58,22 @@
 	const baseEnd = $derived(effEnd ? context.offsetOf(addDays(effEnd, 1)) : null);
 
 	const geom = $derived(computeGeom(kind, baseStart, baseEnd, dragMode, dragDelta, pxPerUnit));
+
+	// Clamped to an edge: that end's real date lies beyond the range. Each end is
+	// judged on its own; a milestone's single date serves as both.
+	const firstDate = $derived(effStart ?? effEnd);
+	const lastDate = $derived(effEnd ?? effStart);
+	const firstOffset = $derived(baseStart ?? baseEnd);
+	const lastOffset = $derived(baseEnd ?? baseStart);
+	const outsideBefore = $derived(!!firstDate && context.isOutside(firstDate) && firstOffset === 0);
+	const outsideAfter = $derived(!!lastDate && context.isOutside(lastDate) && lastOffset === totalUnits);
+	const outside = $derived(outsideBefore || outsideAfter);
+	const dates = $derived(
+		[effStart, effEnd].filter((d): d is Date => d !== null).map(formatISODate).join(" – "),
+	);
+	const tip = $derived(
+		outside ? `${row.title}\n${t("barOutside")} ${outsideBefore ? "←" : "→"} ${dates}` : row.title,
+	);
 
 	// Re-runs whenever the row's dates change (each query update yields fresh Date
 	// objects). Once the persisted data lands, release the optimistic hold so the
@@ -93,7 +114,7 @@
 		mode: Mode | null,
 		delta: number,
 		px: number,
-	): { left: number; width: number } | null {
+	): Geom | null {
 		if (k === "none") return null;
 		if (k === "bar" && s !== null && e !== null) {
 			let start = s;
@@ -106,7 +127,10 @@
 			} else if (mode === "end") {
 				end = Math.max(e + delta, s);
 			}
-			return { left: start * px, width: Math.max(1, (end - start) * px) };
+			// Wholly outside: both ends clamp onto the same edge. Park it there
+			// without a width, so it takes just what its label needs.
+			if (end - start <= 0) return start <= 0 ? { left: 0 } : { right: 0 };
+			return { left: start * px, width: (end - start) * px };
 		}
 		// Milestone: single point.
 		const at = (s ?? e ?? 0) + (mode === "move" ? delta : 0);
@@ -201,12 +225,15 @@
 		<div
 			class="tm-bar"
 			class:is-dragging={dragMode !== null}
-			style:left="{geom.left}px"
-			style:width="{geom.width}px"
+			class:is-outside={outside}
+			class:is-outside-after={outsideAfter}
+			style:left={geom.left != null ? `${geom.left}px` : null}
+			style:right={geom.right != null ? `${geom.right}px` : null}
+			style:width={geom.width != null ? `${geom.width}px` : null}
 			role="button"
 			tabindex="0"
 			aria-label={row.title}
-			use:tooltip={row.title}
+			use:tooltip={tip}
 			onpointerdown={(e) => startDrag("move", e)}
 			onclick={openOnClick}
 			onkeydown={(e) => (e.key === "Enter" ? context.openDetail(row.file, e) : null)}
@@ -215,22 +242,42 @@
 				<span class="tm-bar-handle tm-bar-handle-start" role="presentation" onpointerdown={(e) => startDrag("start", e)}></span>
 				<span class="tm-bar-handle tm-bar-handle-end" role="presentation" onpointerdown={(e) => startDrag("end", e)}></span>
 			{/if}
+			{#if outsideBefore}
+				<span class="tm-bar-outside" use:icon={"chevron-left"}></span>
+			{/if}
+			{#if outside}
+				<span class="tm-bar-outside" use:icon={"alert-triangle"}></span>
+			{/if}
 			<span class="tm-bar-label">{row.title}</span>
+			{#if outsideAfter}
+				<span class="tm-bar-outside" use:icon={"chevron-right"}></span>
+			{/if}
 		</div>
 	{:else}
 		<div
 			class="tm-milestone"
 			class:is-dragging={dragMode !== null}
-			style:left="{geom.left}px"
+			class:is-outside={outside}
+			style:left={geom.left != null ? `${geom.left}px` : null}
+			style:right={geom.right != null ? `${geom.right}px` : null}
 			role="button"
 			tabindex="0"
 			aria-label={row.title}
-			use:tooltip={row.title}
+			use:tooltip={tip}
 			onpointerdown={(e) => startDrag("move", e)}
 			onclick={openOnClick}
 			onkeydown={(e) => (e.key === "Enter" ? context.openDetail(row.file, e) : null)}
 		>
+			{#if outsideBefore}
+				<span class="tm-bar-outside" use:icon={"chevron-left"}></span>
+			{/if}
 			<span class="tm-milestone-dot"></span>
+			{#if outsideAfter}
+				<span class="tm-bar-outside" use:icon={"chevron-right"}></span>
+			{/if}
+			{#if outside}
+				<span class="tm-bar-outside" use:icon={"alert-triangle"}></span>
+			{/if}
 			<span class="tm-milestone-label">{row.title}</span>
 		</div>
 	{/if}

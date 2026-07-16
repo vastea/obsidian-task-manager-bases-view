@@ -4,6 +4,11 @@ import { type Lang, setLocale, t } from "./i18n.svelte";
 
 export type WeekStart = "sunday" | "monday";
 
+/** Fewest cells a timeline header may be budgeted. */
+export const MIN_MAX_UNITS = 48;
+/** Cells a timeline header is budgeted unless the setting raises it. */
+export const DEFAULT_MAX_UNITS = 120;
+
 export interface TaskManagerSettings {
 	/** UI language. */
 	language: Lang;
@@ -15,6 +20,12 @@ export interface TaskManagerSettings {
 
 	/** Timeline: drag/resize snaps to the current scale's grid unit (drag only). */
 	snapToGrid: boolean;
+	/**
+	 * Timeline: most cells a header may draw. Raising it buys a wider timeline at
+	 * a render cost, and {@link MIN_MAX_UNITS} is the floor. A single timeline can
+	 * waive the constraint in its view options.
+	 */
+	maxUnits: number;
 
 	/** Calendar-only, cross-file conventions. */
 	/**
@@ -51,6 +62,7 @@ export const DEFAULT_SETTINGS: TaskManagerSettings = {
 	// who used the calendar on defaults without ever persisting settings.
 	enableCalendar: true,
 	snapToGrid: false,
+	maxUnits: DEFAULT_MAX_UNITS,
 	dailyNotesReminder: true,
 	weekStart: "monday",
 	logSection: "Log",
@@ -134,20 +146,10 @@ export class TaskManagerSettingTab extends PluginSettingTab {
 				tg.setValue(this.plugin.settings.enableTimeline).onChange(async (v) => {
 					this.plugin.settings.enableTimeline = v;
 					await this.plugin.saveSettings();
+					setTimelineVisible(v);
 				}),
 			);
 		reloadNotice(timeline);
-
-		// Timeline snap-to-grid is read live by open timelines (drag only), no reload.
-		new Setting(containerEl)
-			.setName(t("setSnap"))
-			.setDesc(t("setSnapDesc"))
-			.addToggle((tg) =>
-				tg.setValue(this.plugin.settings.snapToGrid).onChange(async (v) => {
-					this.plugin.settings.snapToGrid = v;
-					await this.plugin.saveSettings();
-				}),
-			);
 
 		// Calendar entry points toggle live — no plugin reload needed, so no notice.
 		new Setting(containerEl)
@@ -163,6 +165,52 @@ export class TaskManagerSettingTab extends PluginSettingTab {
 					setCalendarVisible(v);
 				}),
 			);
+
+		// All timeline settings are gathered here so they can be hidden in one go
+		// when the timeline view is disabled.
+		const timelineEls: HTMLElement[] = [];
+		const tl = (s: Setting): Setting => (timelineEls.push(s.settingEl), s);
+
+		tl(new Setting(containerEl).setName(t("setTimelineHeading")).setHeading());
+
+		// Snap-to-grid is read live by open timelines (drag only), no reload.
+		tl(
+			new Setting(containerEl)
+				.setName(t("setSnap"))
+				.setDesc(t("setSnapDesc"))
+				.addToggle((tg) =>
+					tg.setValue(this.plugin.settings.snapToGrid).onChange(async (v) => {
+						this.plugin.settings.snapToGrid = v;
+						await this.plugin.saveSettings();
+					}),
+				),
+		);
+
+		const maxUnits = tl(
+			new Setting(containerEl)
+				.setName(t("setMaxUnits"))
+				.setDesc(t("setMaxUnitsDesc"))
+				.addText((tx) =>
+					tx
+						.setPlaceholder(`${DEFAULT_MAX_UNITS}`)
+						.setValue(`${this.plugin.settings.maxUnits}`)
+						.onChange(async (v) => {
+							// Anything unreadable rests on the default, anything too
+							// small on the floor.
+							const typed = Number.parseInt(v, 10);
+							this.plugin.settings.maxUnits = Number.isFinite(typed)
+								? Math.max(typed, MIN_MAX_UNITS)
+								: DEFAULT_MAX_UNITS;
+							await this.plugin.saveSettings();
+						}),
+				),
+		);
+		reloadNotice(maxUnits);
+
+		const setTimelineVisible = (v: boolean) => {
+			for (const el of timelineEls) el.toggle(v);
+		};
+		setTimelineVisible(this.plugin.settings.enableTimeline);
 
 		// All calendar settings are gathered here so they can be hidden in one go
 		// when the calendar view is disabled.

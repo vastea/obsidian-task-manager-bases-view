@@ -40,10 +40,12 @@ export interface TimelineContext {
 	write: (file: TFile, changes: { start?: Date | null; end?: Date | null }) => void;
 	/** Snap a date to the current grid unit (identity when snapping is off). */
 	snap: (d: Date) => Date;
-	/** Offset of `d` from the range start, in scale units (fractional). */
+	/** Offset of `d` from the range start, in scale units, clamped to the range. */
 	offsetOf: (d: Date) => number;
 	/** The date at `offset` scale units from the range start. */
 	dateAt: (offset: number) => Date;
+	/** Whether `d` falls outside the shown range, so `offsetOf` clamped it. */
+	isOutside: (d: Date) => boolean;
 }
 
 export interface TimelineState {

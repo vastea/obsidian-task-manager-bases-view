@@ -36,6 +36,7 @@ The plugin is a thin renderer: change frontmatter / Bases config / drag → Base
 - **Multi‑tier header** — a stacked, cumulative header (year → quarter → month → week → day, coarsest on top); each cell shows only its own unit, centered, and grid lines follow the finest tier.
 - **Padding** — *which* time range is shown: `default` (unchanged), `moderate` (one whole scale unit each side), or `fit` (trim to whole scale units around the items). Partial first/last cells are widened just enough for their header label to fit.
 - **Zoom** — *how densely* that range is drawn (independent of padding). **Auto zoom** derives the density from the pane width so the whole range fits without horizontal scrolling; with it off, a **Zoom** slider sets the density as a percentage of the scale's default (100 % = the default look, higher values zoom in).
+- **Max cells** — how many cells a header may draw, a plugin setting (120 by default, 48 the lowest accepted). When a range needs more, the window holding the most items whole is shown, and items beyond it are drawn at the edge with a warning and an arrow, their real date in the tooltip. Raise it for wider — and heavier — timelines, or let a single timeline waive it with **Ignore the max cells constraint** in its view options.
 - **Drag** the bar to shift both dates, drag an edge to change one end (writeback to `note.*`). With **Snap to grid** (a plugin setting) on, drag/resize snaps to the current scale's unit — drag only; existing dates are never changed otherwise.
 
 ![Timeline grouped into lanes by a Bases group‑by (Alpha / Beta / Gamma / Personal) at day scale, with Gantt bars and orange milestone diamonds for single‑date tasks; ungrouped views render a flat list instead](docs/images/timeline-2.png)
@@ -104,6 +105,7 @@ Each view can be turned off independently, and the calendar's settings appear on
 | timeline | `rangePadding` | Empty time around the items: `default` / `moderate` / `fit`. |
 | timeline | `autoZoom` | Derive density from the pane width so the whole range fits (hides the zoom slider). |
 | timeline | `zoom` | Density as a percentage of the scale's default (10 – 200, 100 = default). |
+| timeline | `ignoreMaxUnits` | Draw the whole range regardless of the **Max cells** plugin setting, at the render cost. |
 
 ## Example vault
 

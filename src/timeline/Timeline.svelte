@@ -8,9 +8,6 @@
 	let scrollEl = $state<HTMLDivElement | null>(null);
 	let scrolledFor = "";
 
-	// Width of the sticky label gutter (see .tm-tl-corner / .tm-tl-rowlabel).
-	const LABEL_WIDTH = 180;
-
 	const pxPerUnit = $derived(tl.pxPerUnit);
 	const trackWidth = $derived(tl.totalUnits * pxPerUnit);
 
@@ -21,7 +18,7 @@
 		if (!scrollEl || !tl.hasRange || scrolledFor === key) return;
 		scrolledFor = key;
 		// When the whole track fits the pane there is nothing to scroll.
-		if (trackWidth <= scrollEl.clientWidth - LABEL_WIDTH) return;
+		if (scrollEl.scrollWidth <= scrollEl.clientWidth) return;
 		const target = Math.max(0, tl.todayOffset * pxPerUnit - 160);
 		scrollEl.scrollLeft = target;
 	});
@@ -77,7 +74,7 @@
 								{row.title}
 							</div>
 							<div class="tm-tl-track" style:width="{trackWidth}px">
-								<Bar {row} {pxPerUnit} context={ctx} />
+								<Bar {row} {pxPerUnit} totalUnits={tl.totalUnits} context={ctx} />
 							</div>
 						</div>
 					{/each}

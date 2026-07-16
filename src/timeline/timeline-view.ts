@@ -37,6 +37,7 @@ export const TM_TIMELINE_VIEW = "tm-timeline";
 /** Width (px) of one cell at zoom 100%, per scale. */
 const PX_DEFAULT: Record<TimelineScale, number> = { day: 48, week: 154, month: 244, quarter: 274, year: 365 };
 
+
 export function timelineViewOptions(config: BasesViewConfig): BasesAllOptions[] {
 	const options: BasesAllOptions[] = [
 		{
@@ -104,6 +105,12 @@ export function timelineViewOptions(config: BasesViewConfig): BasesAllOptions[] 
 					instant: true,
 					shouldHide: () => config.get("autoZoom") === true,
 				},
+				{
+					type: "toggle",
+					key: "ignoreMaxUnits",
+					displayName: t("optIgnoreMaxUnits"),
+					default: false,
+				},
 			],
 		},
 	];
@@ -143,6 +150,12 @@ export class TimelineView extends BasesView {
 		);
 	}
 
+	/** Width of the sticky label gutter, as the stylesheet defines it. */
+	private labelGutterWidth(): number {
+		const declared = getComputedStyle(this.containerEl).getPropertyValue("--tm-tl-label-width");
+		return Number.parseFloat(declared) || 0;
+	}
+
 	override onunload(): void {
 		this.resizeObserver?.disconnect();
 		this.resizeObserver = null;
@@ -162,6 +175,9 @@ export class TimelineView extends BasesView {
 		const rawZoom = this.config.get("zoom");
 		// Percentage of the scale's default density.
 		const zoom = rawZoom == null ? 100 : Number(rawZoom);
+		// Cells the header may draw, unless this timeline waives the constraint.
+		const ignoreMaxUnits = this.config.get("ignoreMaxUnits") === true;
+		const maxUnits = ignoreMaxUnits ? Infinity : this.plugin.settings.maxUnits;
 		const rangePadding = (this.config.get("rangePadding") as string | undefined) ?? "default";
 		// Drop values equal to the option defaults so the .base stays minimal.
 		if (this.config.get("rangePadding") === "default") this.config.set("rangePadding", null);
@@ -170,8 +186,9 @@ export class TimelineView extends BasesView {
 
 		const writeEnabled = isWritable(startProp) && isWritable(endProp);
 		// Filled in once the range is final; the context closures read it lazily so
-		// bars and the track share one origin.
-		const geom = { start: new Date() };
+		// bars and the track share one origin and one span.
+		const geom = { start: new Date(), units: 0 };
+		const clamp = (offset: number) => Math.min(Math.max(offset, 0), geom.units);
 		const context: TimelineContext = {
 			properties: this.data.properties,
 			renderContext: this.app.renderContext,
@@ -186,8 +203,12 @@ export class TimelineView extends BasesView {
 				}
 			},
 			snap: (d) => (this.plugin.settings.snapToGrid ? startOfUnit(d, scale) : d),
-			offsetOf: (d) => offsetOf(d, geom.start, scale),
-			dateAt: (offset) => dateAt(offset, geom.start, scale),
+			offsetOf: (d) => clamp(offsetOf(d, geom.start, scale)),
+			dateAt: (offset) => dateAt(clamp(offset), geom.start, scale),
+			isOutside: (d) => {
+				const raw = offsetOf(d, geom.start, scale);
+				return raw < 0 || raw > geom.units;
+			},
 		};
 
 		if (!startProp && !endProp) {
@@ -274,6 +295,13 @@ export class TimelineView extends BasesView {
 			rangeEnd = endOfUnit(addUnits(max, scale, 1), scale);
 		}
 		let totalUnits = Math.max(1, offsetOf(addDays(rangeEnd, 1), rangeStart, scale));
+		// Over the budget, narrow the range to the window holding the most rows;
+		// the rest clamp to its edges.
+		if (totalUnits > maxUnits) {
+			rangeStart = bestWindowStart(allRows, maxUnits, scale);
+			rangeEnd = addDays(addUnits(rangeStart, scale, maxUnits), -1);
+			totalUnits = maxUnits;
+		}
 		let tiers = buildTiers(rangeStart, totalUnits, scale);
 
 		// Lower bound on the density: how wide a cell must be for the widest label
@@ -287,12 +315,11 @@ export class TimelineView extends BasesView {
 			minPxPerUnit = Math.max(minPxPerUnit, widest / (MIN_ATOMS[scale][row] ?? 1));
 		}
 
-		// Width of the sticky label gutter (see .tm-tl-corner / .tm-tl-rowlabel).
-		const LABEL_WIDTH = 180;
+		const labelWidth = this.labelGutterWidth();
 		const viewportWidth = this.containerEl.clientWidth;
 		const densityFor = (tot: number): number => {
 			if (autoZoom) {
-				const fit = tot > 0 && viewportWidth > LABEL_WIDTH ? (viewportWidth - LABEL_WIDTH) / tot : 0;
+				const fit = tot > 0 && viewportWidth > labelWidth ? (viewportWidth - labelWidth) / tot : 0;
 				return Math.max(minPxPerUnit, fit);
 			}
 			return Math.max(minPxPerUnit, (PX_DEFAULT[scale] * zoom) / 100);
@@ -302,7 +329,7 @@ export class TimelineView extends BasesView {
 		// A clipped first/last cell is too narrow for its label because it is cut
 		// off, not because the density is too low — so grow the range, in whole
 		// scale units to keep it aligned.
-		if (viewportWidth > LABEL_WIDTH) {
+		if (viewportWidth > labelWidth) {
 			const unitsToFit = (seg: TimelineAxisSegment): number => {
 				const missing = (labelWidths.get(seg.label) ?? 0) / pxPerUnit - seg.units;
 				return missing > 0 ? Math.ceil(missing) : 0;
@@ -324,6 +351,7 @@ export class TimelineView extends BasesView {
 			}
 		}
 		geom.start = rangeStart;
+		geom.units = totalUnits;
 		const todayOffset = offsetOf(today, rangeStart, scale);
 		this.ready = true;
 
@@ -451,6 +479,26 @@ function offsetOf(d: Date, rangeStart: Date, scale: TimelineScale): number {
 	const unitDays = dayDiff(addUnits(unitStart, scale, 1), unitStart);
 	const fraction = unitDays > 0 ? dayDiff(d, unitStart) / unitDays : 0;
 	return unitsBetween(rangeStart, unitStart, scale) + fraction;
+}
+
+/** Start of the `maxUnits`-wide window holding the most rows whole, unit-aligned. */
+function bestWindowStart(rows: TimelineRow[], maxUnits: number, scale: TimelineScale): Date {
+	const spans = rows
+		.map((r) => ({ from: r.start ?? r.end, to: r.end ?? r.start }))
+		.filter((s): s is { from: Date; to: Date } => s.from !== null && s.to !== null)
+		.sort((a, b) => a.from.getTime() - b.from.getTime());
+	let best = startOfUnit(spans[0]?.from ?? new Date(), scale);
+	let bestCount = -1;
+	for (const candidate of spans) {
+		const from = startOfUnit(candidate.from, scale);
+		const to = addUnits(from, scale, maxUnits);
+		const count = spans.filter((s) => s.from >= from && s.to < to).length;
+		if (count > bestCount) {
+			bestCount = count;
+			best = from;
+		}
+	}
+	return best;
 }
 
 /** The date at `offset` scale units from `rangeStart`; inverse of `offsetOf`. */

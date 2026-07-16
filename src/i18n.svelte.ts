@@ -125,10 +125,22 @@ const dict = {
 	optSize: { en: "Size", zh: "大小", de: "Größe" },
 	optZoom: { en: "Zoom (%)", zh: "缩放 (%)", de: "Zoom (%)" },
 	optAutoZoom: { en: "Auto zoom", zh: "自动缩放", de: "Auto-Zoom" },
+	optIgnoreMaxUnits: {
+		en: "Ignore the max cells constraint",
+		zh: "忽略最大单元格数限制",
+		de: "Max.-Zellen-Beschränkung ignorieren",
+	},
+	barOutside: { en: "Outside the shown range", zh: "超出显示范围", de: "Außerhalb des gezeigten Bereichs" },
 	optPadding: { en: "Padding", zh: "内边距", de: "Polsterung" },
 	rangeDefault: { en: "Default", zh: "默认", de: "Standard" },
 	rangeModerate: { en: "Moderate padding", zh: "适度留白", de: "Moderate Polsterung" },
 	rangeFit: { en: "Fit to items", zh: "贴合条目", de: "Auf Einträge" },
+	setMaxUnits: { en: "Max cells (timeline)", zh: "最大单元格数（时间线）", de: "Max. Zellen (Timeline)" },
+	setMaxUnitsDesc: {
+		en: "Most cells a timeline header may draw. When a range needs more, the window holding the most items whole is shown and items beyond it are marked at the edge. Raise it for wider — and heavier — timelines; 48 is the lowest accepted. A single timeline can waive this in its view options.",
+		zh: "时间线表头最多绘制的单元格数。当范围需要更多时，将显示完整包含最多条目的窗口，超出的条目在边缘标记。调高可获得更宽（也更重）的时间线；最小可设为 48。单个时间线可在其视图选项中忽略此限制。",
+		de: "Wie viele Zellen eine Timeline-Kopfzeile höchstens zeichnet. Braucht ein Bereich mehr, wird das Fenster mit den meisten vollständig enthaltenen Einträgen gezeigt; alles darüber hinaus wird am Rand markiert. Höhere Werte ergeben breitere — und trägere — Timelines; 48 ist der kleinste zulässige Wert. Eine einzelne Timeline kann das in ihren View-Optionen übergehen.",
+	},
 	setSnap: { en: "Snap to grid (timeline)", zh: "对齐网格（时间线）", de: "Am Raster ausrichten (Timeline)" },
 	setSnapDesc: {
 		en: "When on, dragging or resizing a timeline bar snaps to the current scale's grid (month → month start, week → Monday, …). Existing dates are only changed when you drag.",
@@ -160,6 +172,7 @@ const dict = {
 		zh: "开关视图后，需要在「社区插件」里关闭再启用本插件（或重启 Obsidian）才会生效。",
 		de: "Das Ein-/Ausschalten einer Ansicht wirkt erst, nachdem du das Plugin deaktivierst und wieder aktivierst (oder Obsidian neu startest).",
 	},
+	setTimelineHeading: { en: "Timeline settings", zh: "时间线设置", de: "Einstellungen für die Timeline" },
 	setCalendarHeading: { en: "Weekly log calendar settings", zh: "周历日志日历设置", de: "Einstellungen für den Wochenprotokoll-Kalender" },
 	setDailyNotesHint: {
 		en: "This view creates and looks up daily notes from the core Daily notes plugin's configuration. Review and adjust as needed — daily-note folder, filename date format, and template — under Settings → Core plugins → Daily notes.",
