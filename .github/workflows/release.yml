@@ -27,13 +27,30 @@ jobs:
           npm ci
           npm run build
 
-      - name: Attest build provenance
-        uses: actions/attest-build-provenance@v2
+      # Keep one subject per attestation. Some downstream verifiers validate
+      # release assets independently and cannot consume a multi-subject bundle.
+      - name: Attest main.js
+        uses: actions/attest@v4
         with:
-          subject-path: |
-            main.js
-            manifest.json
-            styles.css
+          subject-path: main.js
+
+      - name: Attest manifest.json
+        uses: actions/attest@v4
+        with:
+          subject-path: manifest.json
+
+      - name: Attest styles.css
+        uses: actions/attest@v4
+        with:
+          subject-path: styles.css
+
+      - name: Verify artifact attestations
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh attestation verify main.js --repo "$GITHUB_REPOSITORY"
+          gh attestation verify manifest.json --repo "$GITHUB_REPOSITORY"
+          gh attestation verify styles.css --repo "$GITHUB_REPOSITORY"
 
       - name: Create release with artifacts
         env:

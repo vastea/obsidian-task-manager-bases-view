@@ -1,4 +1,5 @@
 import { type App, type TFile, moment } from "obsidian";
+import type { Moment, MomentInput } from "moment";
 import {
 	appHasDailyNotesPluginLoaded,
 	createDailyNote,
@@ -15,6 +16,12 @@ import {
 	parseLogLine,
 	parseLogText,
 } from "../shared/section-parser";
+
+// Obsidian exposes Moment as a callable namespace. TypeScript accepts that
+// declaration, but type-aware ESLint treats calls through it as error/any.
+// Keep using Obsidian's runtime instance while presenting its real callable
+// signature to this module and to obsidian-daily-notes-interface.
+const toMoment = moment as unknown as (input?: MomentInput) => Moment;
 
 /**
  * All file IO for the weekly-log calendar. Daily-note location/creation is
@@ -50,7 +57,7 @@ export function dailyNotesConfig(): DailyNotesConfig {
 /** Find an existing daily note for the date, or null. */
 export function findDailyNote(date: Date): TFile | null {
 	if (!appHasDailyNotesPluginLoaded()) return null;
-	return getDailyNoteForMoment(moment(date), getAllDailyNotes()) ?? null;
+	return getDailyNoteForMoment(toMoment(date), getAllDailyNotes()) ?? null;
 }
 
 /** Find or create the daily note for the date (recursively creates folders + applies the template). */
@@ -58,7 +65,7 @@ export async function ensureDailyNote(date: Date): Promise<TFile> {
 	const existing = findDailyNote(date);
 	if (existing) return existing;
 	if (!appHasDailyNotesPluginLoaded()) throw new Error("Daily notes plugin is not enabled");
-	const created = await createDailyNote(moment(date));
+	const created = await createDailyNote(toMoment(date));
 	if (!created) throw new Error("Failed to create daily note");
 	return created;
 }
@@ -108,7 +115,7 @@ export async function insertLog(
 
 /** Date + time-range prefix of a back-reference record; used to locate it for in-place edits. */
 function backlinkPrefix(date: Date, startMinutes: number, endMinutes: number): string {
-	const day = moment(date).format("YYYY-MM-DD");
+	const day = toMoment(date).format("YYYY-MM-DD");
 	return `- ${day} ${formatTime(startMinutes)}-${formatTime(endMinutes)}`;
 }
 
