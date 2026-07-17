@@ -1,7 +1,7 @@
 {
 	"id": "task-manager-bases-view",
 	"name": "Task Manager Bases View",
-	"version": "0.7.0",
+	"version": "0.7.1",
 	"minAppVersion": "1.10.2",
 	"description": "Kanban, timeline and weekly-log views for tasks stored in your notes, powered by Bases.",
 	"author": "vastea",
