@@ -6,6 +6,22 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-07-17
+
+### Added
+
+- German README with navigation links from the English and Chinese documentation.
+
+### Changed
+
+- Added the Obsidian 1.13 declarative settings API so plugin settings appear in
+  settings search, while retaining the imperative settings renderer for
+  Obsidian 1.10.2–1.12 compatibility. The minimum supported version remains
+  1.10.2.
+- Updated CI and release workflows to Node.js 24-compatible GitHub Actions and
+  Node.js 24. Tag pushes now build, attest and publish a non-draft release
+  automatically.
+
 ## [0.7.1] - 2026-07-17
 
 ### Fixed
@@ -208,7 +224,8 @@ Initial release.
   back-references.
 - English / 中文 localisation, switchable in settings.
 
-[Unreleased]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.7.1...HEAD
+[Unreleased]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.8.0...HEAD
+[0.8.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.7.2...0.8.0
 [0.7.1]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.7.0...0.7.1
 [0.7.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.6.0...0.7.0
 [0.6.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.5.1...0.6.0

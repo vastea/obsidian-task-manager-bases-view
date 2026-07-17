@@ -1,4 +1,4 @@
-import { type App, type DropdownComponent, PluginSettingTab, Setting } from "obsidian";
+import { type App, type DropdownComponent, PluginSettingTab, Setting, type SettingDefinitionItem } from "obsidian";
 import type TaskManagerPlugin from "./main";
 import { type Lang, setLocale, t } from "./i18n.svelte";
 
@@ -101,7 +101,252 @@ export class TaskManagerSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
+	getSettingDefinitions(): SettingDefinitionItem<keyof TaskManagerSettings>[] {
+		const reloadDesc = (description: string): DocumentFragment =>
+			createFragment((fragment) => {
+				fragment.append(description);
+				fragment.createDiv({ cls: "tm-setting-reload-note", text: t("setReloadNote") });
+			});
+		const hourLabel = (hour: number): string => String(hour).padStart(2, "0") + ":00";
+		const hourOptions = (first: number, last: number): Record<string, string> => {
+			const options: Record<string, string> = {};
+			for (let hour = first; hour <= last; hour++) options[String(hour)] = hourLabel(hour);
+			return options;
+		};
+
+		return [
+			{
+				name: t("setLanguage"),
+				desc: t("setLanguageDesc"),
+				control: {
+					type: "dropdown",
+					key: "language",
+					defaultValue: DEFAULT_SETTINGS.language,
+					options: { en: "English", zh: "中文", de: "Deutsch" },
+				},
+			},
+			{
+				type: "group",
+				heading: t("setViews"),
+				items: [
+					{
+						name: t("setKanban"),
+						desc: reloadDesc(t("setKanbanDesc")),
+						control: { type: "toggle", key: "enableKanban", defaultValue: true },
+					},
+					{
+						name: t("setTimeline"),
+						desc: reloadDesc(t("setTimelineDesc")),
+						control: { type: "toggle", key: "enableTimeline", defaultValue: true },
+					},
+					{
+						name: t("setCalendar"),
+						desc: t("setCalendarDesc"),
+						control: { type: "toggle", key: "enableCalendar", defaultValue: true },
+					},
+				],
+			},
+			{
+				type: "group",
+				heading: t("setTimelineHeading"),
+				visible: () => this.plugin.settings.enableTimeline,
+				items: [
+					{
+						name: t("setSnap"),
+						desc: t("setSnapDesc"),
+						control: { type: "toggle", key: "snapToGrid", defaultValue: false },
+					},
+					{
+						name: t("setMaxUnits"),
+						desc: reloadDesc(t("setMaxUnitsDesc")),
+						control: {
+							type: "number",
+							key: "maxUnits",
+							defaultValue: DEFAULT_MAX_UNITS,
+							placeholder: String(DEFAULT_MAX_UNITS),
+							min: MIN_MAX_UNITS,
+							step: 1,
+						},
+					},
+				],
+			},
+			{
+				type: "group",
+				heading: t("setCalendarHeading"),
+				visible: () => this.plugin.settings.enableCalendar,
+				items: [
+					{ name: t("dailyNotesTitle"), desc: t("setDailyNotesHint") },
+					{
+						name: t("setFirstDay"),
+						control: {
+							type: "dropdown",
+							key: "weekStart",
+							defaultValue: DEFAULT_SETTINGS.weekStart,
+							options: { monday: t("setMonday"), sunday: t("setSunday") },
+						},
+					},
+					{
+						name: t("setDayStart"),
+						desc: t("setDayWindowDesc"),
+						control: {
+							type: "dropdown",
+							key: "dayStartHour",
+							defaultValue: String(DEFAULT_SETTINGS.dayStartHour),
+							options: hourOptions(0, 23),
+						},
+					},
+					{
+						name: t("setDayEnd"),
+						control: {
+							type: "dropdown",
+							key: "dayEndHour",
+							defaultValue: String(DEFAULT_SETTINGS.dayEndHour),
+							options: hourOptions(1, 24),
+						},
+					},
+					{
+						name: t("setLogSection"),
+						desc: t("setLogSectionDesc"),
+						control: { type: "text", key: "logSection", defaultValue: "Log", placeholder: "Log" },
+					},
+					{
+						name: t("setBacklink"),
+						desc: t("setBacklinkDesc"),
+						control: { type: "toggle", key: "logBacklink", defaultValue: false },
+					},
+					{
+						name: t("setBacklinkSection"),
+						desc: t("setBacklinkSectionDesc"),
+						visible: () => this.plugin.settings.logBacklink,
+						control: { type: "text", key: "logBacklinkSection", defaultValue: "Log", placeholder: "Log" },
+					},
+					{
+						name: t("setEnableCategories"),
+						desc: t("setEnableCategoriesDesc"),
+						control: { type: "toggle", key: "categoriesEnabled", defaultValue: false },
+					},
+					{
+						name: t("setCategories"),
+						desc: t("setCategoriesDesc"),
+						visible: () => this.plugin.settings.categoriesEnabled,
+						control: {
+							type: "textarea",
+							key: "categoriesText",
+							defaultValue: "",
+							placeholder: "Dev|blue\nMeeting|rgb(224,164,88)\nBreak|#7bbf6a",
+							rows: 4,
+						},
+					},
+				],
+			},
+		];
+	}
+
+	getControlValue(key: string): unknown {
+		if (key === "dayStartHour" || key === "dayEndHour") {
+			return String(this.plugin.settings[key]);
+		}
+		return this.plugin.settings[key as keyof TaskManagerSettings];
+	}
+
+	async setControlValue(key: string, value: unknown): Promise<void> {
+		let rebuild = false;
+		let refreshVisibility = false;
+		let calendarEnabled: boolean | null = null;
+
+		switch (key) {
+			case "language":
+				if (value !== "en" && value !== "zh" && value !== "de") return;
+				this.plugin.settings.language = value;
+				setLocale(value);
+				rebuild = true;
+				break;
+			case "enableKanban":
+				if (typeof value !== "boolean") return;
+				this.plugin.settings.enableKanban = value;
+				break;
+			case "enableTimeline":
+				if (typeof value !== "boolean") return;
+				this.plugin.settings.enableTimeline = value;
+				refreshVisibility = true;
+				break;
+			case "enableCalendar":
+				if (typeof value !== "boolean") return;
+				this.plugin.settings.enableCalendar = value;
+				calendarEnabled = value;
+				refreshVisibility = true;
+				break;
+			case "snapToGrid":
+				if (typeof value !== "boolean") return;
+				this.plugin.settings.snapToGrid = value;
+				break;
+			case "maxUnits":
+				if (typeof value !== "number" || !Number.isFinite(value)) return;
+				this.plugin.settings.maxUnits = Math.max(Math.trunc(value), MIN_MAX_UNITS);
+				break;
+			case "weekStart":
+				if (value !== "monday" && value !== "sunday") return;
+				this.plugin.settings.weekStart = value;
+				break;
+			case "dayStartHour": {
+				const start = Number(value);
+				if (!Number.isInteger(start) || start < 0 || start > 23) return;
+				this.plugin.settings.dayStartHour = start;
+				if (this.plugin.settings.dayEndHour <= start) this.plugin.settings.dayEndHour = start + 1;
+				rebuild = true;
+				break;
+			}
+			case "dayEndHour": {
+				const end = Number(value);
+				if (!Number.isInteger(end) || end < 1 || end > 24) return;
+				this.plugin.settings.dayEndHour = end;
+				if (this.plugin.settings.dayStartHour >= end) this.plugin.settings.dayStartHour = end - 1;
+				rebuild = true;
+				break;
+			}
+			case "logSection":
+				if (typeof value !== "string") return;
+				this.plugin.settings.logSection = value.trim() || "Log";
+				break;
+			case "logBacklink":
+				if (typeof value !== "boolean") return;
+				this.plugin.settings.logBacklink = value;
+				refreshVisibility = true;
+				break;
+			case "logBacklinkSection":
+				if (typeof value !== "string") return;
+				this.plugin.settings.logBacklinkSection = value.trim() || "Log";
+				break;
+			case "categoriesEnabled":
+				if (typeof value !== "boolean") return;
+				this.plugin.settings.categoriesEnabled = value;
+				refreshVisibility = true;
+				break;
+			case "categoriesText":
+				if (typeof value !== "string") return;
+				this.plugin.settings.categoriesText = value;
+				break;
+			default:
+				return;
+		}
+
+		await this.plugin.saveSettings();
+		if (calendarEnabled === true) this.plugin.enableCalendarFeature();
+		else if (calendarEnabled === false) this.plugin.disableCalendarFeature();
+
+		// These methods exist only on 1.13+, which is also the only version that
+		// invokes this declarative control writer. Keep the legacy class loadable
+		// on 1.10.2–1.12 by accessing them through a local compatibility shape.
+		const declarativeTab = this as unknown as { update(): void; refreshDomState(): void };
+		if (rebuild) declarativeTab.update();
+		else if (refreshVisibility) declarativeTab.refreshDomState();
+	}
+
 	display(): void {
+		this.renderLegacySettings();
+	}
+
+	private renderLegacySettings(): void {
 		const { containerEl } = this;
 		containerEl.empty();
 
@@ -122,7 +367,7 @@ export class TaskManagerSettingTab extends PluginSettingTab {
 						this.plugin.settings.language = v as Lang;
 						setLocale(v as Lang);
 						await this.plugin.saveSettings();
-						this.display(); // re-render settings labels in the new language
+						this.renderLegacySettings(); // re-render labels in Obsidian before 1.13
 					}),
 			);
 

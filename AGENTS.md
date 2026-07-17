@@ -22,7 +22,7 @@ are all done by Bases; which property is the group key / start / end date comes
 from the user's choice in the Bases view options. Calendar is the sole exception
 (it has its own daily-log format convention).
 
-Requires **Obsidian 1.10+** (the Bases view API). `isDesktopOnly: true`.
+Requires **Obsidian 1.10.2+** (the Bases view API). `isDesktopOnly: true`.
 
 ## Common commands
 
@@ -39,8 +39,8 @@ npm run version      # version-bump.mjs syncs manifest.json / versions.json
 - **No lint script.** Type-checking is via `svelte-check` (CI runs `npm run build`).
 - For a sanity check after editing, run `npm run build` (includes the type-check),
   not just `dev`.
-- CI (`.github/workflows/ci.yml`) runs `npm run build` on Node 20/22; pushing a
-  tag triggers `release.yml`, which produces a draft release with the artifacts.
+- CI (`.github/workflows/ci.yml`) runs `npm run build` on Node 24; pushing a
+  tag triggers `release.yml`, which builds, attests and publishes the artifacts.
 
 ## Tech stack notes
 
@@ -160,25 +160,28 @@ drag clamps are all relative to the window start.
 
 ### Settings page (`settings.ts`)
 
-`display()` avoids full re-renders (which steal focus): dependent fields are
-built once and shown/hidden with `settingEl.toggle(...)`, and paired dropdowns
-update each other via `setValue(...)`. Only a language change calls
-`this.display()` (it must relabel everything). All calendar settings are
-collected into one group and hidden as a unit when the calendar view is
-disabled; the back-reference-section and category-list fields additionally
-respect their own sub-toggle.
+The tab follows the official Obsidian dual-support path while 1.13 remains an
+insider build: `getSettingDefinitions()` provides searchable declarative
+settings on 1.13+, while `display()` delegates to the imperative renderer on
+1.10.2–1.12. Keep both implementations in sync when changing a setting.
+
+The declarative path uses `visible` predicates and `refreshDomState()` for
+dependent fields. The legacy renderer builds dependent fields once and toggles
+their setting elements, avoiding full re-renders that steal focus. Both paths
+gate calendar and timeline groups by their view toggles, with additional gates
+for the back-reference section and category list.
 
 Demo screenshots used by the READMEs live in `docs/images/` (`kanban-1`,
 `timeline-2`, `calendar-1`, `settings-2`).
 
 ## i18n
 
-`i18n.svelte.ts` holds one `dict` (en/zh); `t(key)` returns the string for the
+`i18n.svelte.ts` holds one `dict` (en/zh/de); `t(key)` returns the string for the
 current locale. The locale is a `$state` signal — strings in Svelte templates
 update live when the language changes; plain-TS callers (menus, modals, Bases
 view options, Notices) read the current value on use. **Command names are read
 once at registration**, so `main.ts` hard-codes them with both the English and
-localized label separated by a slash. Add new strings in both languages.
+localized label separated by a slash. Add new strings in all three languages.
 
 ## Conventions
 

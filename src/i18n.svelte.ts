@@ -82,14 +82,14 @@ const dict = {
 
 	// --- Notices ---
 	kanbanRegisterFail: {
-		en: "Task Manager: failed to register kanban view (requires Obsidian 1.10+).",
-		zh: "Task Manager：注册看板视图失败（需要 Obsidian 1.10+）。",
-		de: "Task Manager: Kanban-Ansicht konnte nicht registriert werden (benötigt Obsidian 1.10+).",
+		en: "Task Manager: failed to register kanban view (requires Obsidian 1.10.2+).",
+		zh: "Task Manager：注册看板视图失败（需要 Obsidian 1.10.2+）。",
+		de: "Task Manager: Kanban-Ansicht konnte nicht registriert werden (benötigt Obsidian 1.10.2+).",
 	},
 	timelineRegisterFail: {
-		en: "Task Manager: failed to register timeline view (requires Obsidian 1.10+).",
-		zh: "Task Manager：注册时间线视图失败（需要 Obsidian 1.10+）。",
-		de: "Task Manager: Timeline-Ansicht konnte nicht registriert werden (benötigt Obsidian 1.10+).",
+		en: "Task Manager: failed to register timeline view (requires Obsidian 1.10.2+).",
+		zh: "Task Manager：注册时间线视图失败（需要 Obsidian 1.10.2+）。",
+		de: "Task Manager: Timeline-Ansicht konnte nicht registriert werden (benötigt Obsidian 1.10.2+).",
 	},
 	writeFailed: { en: "Task Manager: failed to update", zh: "Task Manager：更新失败", de: "Task Manager: Aktualisierung fehlgeschlagen" },
 	logEntryGone: {
