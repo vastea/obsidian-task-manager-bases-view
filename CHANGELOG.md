@@ -6,6 +6,11 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Generate and verify a separate provenance attestation for each release asset using GitHub's current attestation action.
+- Use a type-safe adapter for Obsidian's Moment runtime in the weekly-log calendar.
+
 ## [0.7.0] - 2026-07-17
 
 ### Added
