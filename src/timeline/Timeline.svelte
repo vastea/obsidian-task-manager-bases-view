@@ -4,17 +4,22 @@
 	import Bar from "./Bar.svelte";
 
 	const tl = $derived(getTimelineState());
-	const trackWidth = $derived(tl.totalDays * tl.pxPerDay);
 
 	let scrollEl = $state<HTMLDivElement | null>(null);
 	let scrolledFor = "";
 
+	const pxPerUnit = $derived(tl.pxPerUnit);
+	const trackWidth = $derived(tl.totalUnits * pxPerUnit);
+
 	// Scroll to "today" once per range so the relevant window is in view.
 	$effect(() => {
-		const key = `${tl.rangeStart.getTime()}:${tl.pxPerDay}`;
+		// Once per range, so changing the density keeps the scroll position.
+		const key = `${tl.rangeStart.getTime()}`;
 		if (!scrollEl || !tl.hasRange || scrolledFor === key) return;
 		scrolledFor = key;
-		const target = Math.max(0, tl.todayOffset * tl.pxPerDay - 160);
+		// When the whole track fits the pane there is nothing to scroll.
+		if (scrollEl.scrollWidth <= scrollEl.clientWidth) return;
+		const target = Math.max(0, tl.todayOffset * pxPerUnit - 160);
 		scrollEl.scrollLeft = target;
 	});
 </script>
@@ -28,24 +33,24 @@
 			<div class="tm-tl-content">
 				<!-- Full-height grid lines (per cell boundary) so bar spans are readable. -->
 				<div class="tm-tl-grid">
-					{#each tl.ticks as tick (tick.dayOffset)}
-						<div
-							class="tm-tl-gridline"
-							class:is-major={tick.major}
-							style:left="{tick.dayOffset * tl.pxPerDay}px"
-						></div>
+					{#each tl.tiers[tl.tiers.length - 1]?.segments ?? [] as seg (seg.unitOffset)}
+						<div class="tm-tl-gridline" style:left="{seg.unitOffset * pxPerUnit}px"></div>
 					{/each}
 				</div>
 				<div class="tm-tl-header">
 					<div class="tm-tl-corner"></div>
 					<div class="tm-tl-axis" style:width="{trackWidth}px">
-						{#each tl.ticks as tick (tick.dayOffset)}
-							<div
-								class="tm-tl-tick"
-								class:is-major={tick.major}
-								style:left="{tick.dayOffset * tl.pxPerDay}px"
-							>
-								<span class="tm-tl-tick-label">{tick.label}</span>
+						{#each tl.tiers as tier, ti (ti)}
+							<div class="tm-tl-tier">
+								{#each tier.segments as seg (seg.unitOffset)}
+									<div
+										class="tm-tl-seg"
+										style:left="{seg.unitOffset * pxPerUnit}px"
+										style:width="{seg.units * pxPerUnit}px"
+									>
+										<span class="tm-tl-seg-label">{seg.label}</span>
+									</div>
+								{/each}
 							</div>
 						{/each}
 					</div>
@@ -69,12 +74,7 @@
 								{row.title}
 							</div>
 							<div class="tm-tl-track" style:width="{trackWidth}px">
-								<Bar
-									{row}
-									rangeStart={tl.rangeStart}
-									pxPerDay={tl.pxPerDay}
-									context={ctx}
-								/>
+								<Bar {row} {pxPerUnit} totalUnits={tl.totalUnits} context={ctx} />
 							</div>
 						</div>
 					{/each}

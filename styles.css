@@ -276,6 +276,7 @@
 /* ===================== Timeline ===================== */
 
 .tm-timeline-root {
+	--tm-tl-label-width: 180px;
 	height: 100%;
 	overflow: hidden;
 }
@@ -296,7 +297,6 @@
 	display: flex;
 	flex-direction: column;
 	width: max-content;
-	min-width: 100%;
 	position: relative;
 }
 
@@ -305,7 +305,7 @@
 	position: absolute;
 	top: 0;
 	bottom: 0;
-	left: 180px;
+	left: var(--tm-tl-label-width);
 	z-index: 0;
 	pointer-events: none;
 }
@@ -329,7 +329,7 @@
 }
 
 .tm-tl-corner {
-	flex: 0 0 180px;
+	flex: 0 0 var(--tm-tl-label-width);
 	position: sticky;
 	left: 0;
 	z-index: 4;
@@ -339,8 +339,53 @@
 
 .tm-tl-axis {
 	position: relative;
-	height: 28px;
+	display: flex;
+	flex-direction: column;
 	flex: 0 0 auto;
+	/* Cells carry a left border; this closes the last one. */
+	border-right: 1px solid var(--background-modifier-border);
+}
+
+/* One header row per granularity level (year / quarter / month / …). */
+.tm-tl-tier {
+	position: relative;
+	height: 22px;
+	width: 100%;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+.tm-tl-tier:last-child {
+	border-bottom: none;
+}
+.tm-tl-seg {
+	position: absolute;
+	top: 0;
+	height: 100%;
+	border-left: 1px solid var(--background-modifier-border);
+	/* Let a narrow edge cell's label overflow instead of inflating every column. */
+	overflow: visible;
+	white-space: nowrap;
+	box-sizing: border-box;
+}
+.tm-tl-seg-label {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 3px;
+	text-align: center;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	white-space: nowrap;
+}
+
+/* Off-screen probe: header labels shrink-wrapped so their width can be read. */
+.tm-tl-measure {
+	position: absolute;
+	visibility: hidden;
+	pointer-events: none;
+	white-space: nowrap;
+}
+.tm-tl-measure .tm-tl-seg-label {
+	position: static;
 }
 
 .tm-tl-tick {
@@ -388,7 +433,7 @@
 }
 
 .tm-tl-rowlabel {
-	flex: 0 0 180px;
+	flex: 0 0 var(--tm-tl-label-width);
 	position: sticky;
 	left: 0;
 	z-index: 2;
@@ -408,6 +453,10 @@
 	position: relative;
 	min-height: 36px;
 	flex: 0 0 auto; /* keep the explicit track width; do not shrink */
+	/* A bar may overflow its own box, but nothing may leave the track. */
+	overflow: hidden;
+	/* Continues the axis' closing line down through the rows. */
+	border-right: 1px solid var(--background-modifier-border);
 }
 
 .tm-bar {
@@ -419,6 +468,7 @@
 	border-radius: var(--radius-s);
 	display: flex;
 	align-items: center;
+	gap: var(--size-4-1);
 	padding: 0 var(--size-4-2);
 	cursor: grab;
 	overflow: visible;
@@ -427,6 +477,41 @@
 .tm-bar.is-dragging {
 	opacity: 0.7;
 	cursor: grabbing;
+}
+/* Clamped to an edge: the real date lies outside the shown range. */
+/* Its start is clamped, so it cannot be moved — only opened. */
+.tm-bar.is-start-clamped,
+.tm-milestone.is-start-clamped {
+	cursor: pointer;
+}
+.tm-bar.is-outside {
+	background: color-mix(in srgb, var(--interactive-accent) 60%, transparent);
+	outline: 2px dashed var(--text-muted);
+	outline-offset: -2px;
+	/* The marker belongs to the box, so it is cut with it rather than floating
+	   beside a bar too narrow to hold it. */
+	overflow: hidden;
+}
+/* The arrow sits at the trailing edge while the title keeps its place: the auto
+   margin eats the free space between them. Once there is none left it is zero
+   and justify-content takes over, so a box too narrow to hold everything loses
+   the title first and the arrow last. Leading-edge boxes already do (flex-start). */
+.tm-bar.is-outside-after {
+	justify-content: flex-end;
+}
+.tm-bar.is-outside-after .tm-bar-label {
+	margin-right: auto;
+}
+.tm-bar-outside {
+	display: inline-flex;
+	align-items: center;
+	flex-shrink: 0;
+	color: var(--text-muted);
+	pointer-events: none;
+}
+.tm-bar-outside .svg-icon {
+	width: 13px;
+	height: 13px;
 }
 .tm-bar-label {
 	font-size: var(--font-ui-smaller);

@@ -30,11 +30,14 @@ The plugin is a thin renderer: change frontmatter / Bases config / drag → Base
 ![Kanban board with predefined columns (Backlog / Todo / In Progress / Blocked / Done / Cancelled), each softly tinted; cards show their properties as name: value rows beneath a divider under the title, and the Done column offers an archive‑all action](docs/images/kanban-2.png)
 
 ### Timeline (`tm-timeline`)
-- **Start / end** date properties chosen in view options; `scale` = day / week / month.
+- **Start / end** date properties chosen in view options; `scale` = day / week / month / quarter / year (coarser scales keep multi‑year plans on screen).
 - **Lanes follow Bases group‑by** (one lane per group) or a flat list when ungrouped.
 - Bars for start+end, **milestone** dots for a single end, label‑only for no dates.
-- Vertical grid lines per cell so you can read how many cells a bar spans; a padded time window (≈3 months/weeks around the data) and auto‑scroll to today.
-- **Drag** the bar to shift both dates, drag an edge to change one end (writeback to `note.*`).
+- **Multi‑tier header** — a stacked, cumulative header (year → quarter → month → week → day, coarsest on top); each cell shows only its own unit, centered, and grid lines follow the finest tier.
+- **Padding** — *which* time range is shown: `default` (unchanged), `moderate` (one whole scale unit each side), or `fit` (trim to whole scale units around the items). Partial first/last cells are widened just enough for their header label to fit.
+- **Zoom** — *how densely* that range is drawn (independent of padding). **Auto zoom** derives the density from the pane width so the whole range fits without horizontal scrolling; with it off, a **Zoom** slider sets the density as a percentage of the scale's default (100 % = the default look, higher values zoom in).
+- **Max cells** — how many cells a header may draw, a plugin setting (120 by default, 48 the lowest accepted). When a range needs more, the window holding the most items whole is shown, and items beyond it are drawn at the edge with a warning and an arrow, their real date in the tooltip. Raise it for wider — and heavier — timelines, or let a single timeline waive it with **Ignore the max cells constraint** in its view options.
+- **Drag** the bar to shift both dates, drag an edge to change one end (writeback to `note.*`). With **Snap to grid** (a plugin setting) on, drag/resize snaps to the current scale's unit — drag only; existing dates are never changed otherwise.
 
 ![Timeline grouped into lanes by a Bases group‑by (Alpha / Beta / Gamma / Personal) at day scale, with Gantt bars and orange milestone diamonds for single‑date tasks; ungrouped views render a flat list instead](docs/images/timeline-2.png)
 
@@ -81,7 +84,7 @@ Outputs `main.js` (+ `manifest.json`, `styles.css`) in the project root.
    - Kanban: set **Group by** (e.g. `status`); optionally enable **Use predefined columns** and fill the column values / colours / done statuses / archive value.
    - Timeline: pick the **start / end** date properties and a **scale**.
 3. The calendar stores entries in your daily notes, so it needs the core **Daily notes** plugin enabled (Settings → Core plugins → Daily notes). Run the command **Open weekly log** (or the ribbon clock icon); you can turn the view off under **Settings → Task Manager Bases View**.
-4. Global, cross‑file conventions (week start, day window, log section, categories, back‑reference) live in **Settings → Task Manager Bases View**. The daily‑note folder, filename format and template are taken from the core **Daily notes** plugin (Settings → Core plugins → Daily notes) — no duplicate config here.
+4. Global, cross‑file conventions (week start, day window, log section, categories, back‑reference, timeline snap‑to‑grid) live in **Settings → Task Manager Bases View**. The daily‑note folder, filename format and template are taken from the core **Daily notes** plugin (Settings → Core plugins → Daily notes) — no duplicate config here.
 
 > Toggling a view on/off in settings takes effect only after you disable and re‑enable the plugin (or restart Obsidian) — Bases has no per‑view unregister API.
 
@@ -98,7 +101,11 @@ Each view can be turned off independently, and the calendar's settings appear on
 | kanban | `doneStatuses` | Column values treated as “done” (gets the archive‑all action). |
 | kanban | `archiveValue` | Value written by right‑click → Archive / Archive‑all. |
 | timeline | `startProp` / `endProp` | Date properties for the bar ends. |
-| timeline | `scale` | `day` / `week` / `month`. |
+| timeline | `scale` | Header tick granularity: `day` / `week` / `month` / `quarter` / `year`. |
+| timeline | `rangePadding` | Empty time around the items: `default` / `moderate` / `fit`. |
+| timeline | `autoZoom` | Derive density from the pane width so the whole range fits (hides the zoom slider). |
+| timeline | `zoom` | Density as a percentage of the scale's default (10 – 200, 100 = default). |
+| timeline | `ignoreMaxUnits` | Draw the whole range regardless of the **Max cells** plugin setting, at the render cost. |
 
 ## Example vault
 

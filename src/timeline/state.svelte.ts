@@ -1,6 +1,6 @@
 import type { BasesPropertyId, RenderContext, TFile } from "obsidian";
 
-export type TimelineScale = "day" | "week" | "month";
+export type TimelineScale = "day" | "week" | "month" | "quarter" | "year";
 
 export interface TimelineRow {
 	file: TFile;
@@ -16,12 +16,18 @@ export interface TimelineLane {
 	rows: TimelineRow[];
 }
 
-export interface TimelineAxisTick {
+/** A labelled span within one header tier (e.g. a single month or quarter). */
+export interface TimelineAxisSegment {
 	label: string;
-	/** Day offset from rangeStart. */
-	dayOffset: number;
-	/** Emphasised tick (e.g. month boundary). */
-	major: boolean;
+	/** Offset of the segment start from rangeStart, in scale units. */
+	unitOffset: number;
+	/** Segment length in scale units. */
+	units: number;
+}
+
+/** One header row. Tiers stack coarsest-first (year, quarter, month, …). */
+export interface TimelineAxisTier {
+	segments: TimelineAxisSegment[];
 }
 
 export interface TimelineContext {
@@ -32,17 +38,30 @@ export interface TimelineContext {
 	openDetail: (file: TFile, evt: MouseEvent | KeyboardEvent) => void;
 	/** Persist new start/end for a row (only provided ends are written). */
 	write: (file: TFile, changes: { start?: Date | null; end?: Date | null }) => void;
+	/** Snap a start date to its grid unit's first day (identity when off). */
+	snap: (d: Date) => Date;
+	/** Snap an inclusive end date to its grid unit's last day (identity when off). */
+	snapEnd: (d: Date) => Date;
+	/** Offset of `d` from the range start, in scale units, clamped to the range. */
+	offsetOf: (d: Date) => number;
+	/** The date at `offset` scale units from the range start. */
+	dateAt: (offset: number) => Date;
+	/** Whether `d` falls outside the shown range, so `offsetOf` clamped it. */
+	isOutside: (d: Date) => boolean;
 }
 
 export interface TimelineState {
 	hasRange: boolean;
 	scale: TimelineScale;
-	pxPerDay: number;
+	/** Uniform horizontal density: pixels per scale unit. */
+	pxPerUnit: number;
 	rangeStart: Date;
-	totalDays: number;
-	/** Day offset of "today" from rangeStart (for initial scroll). */
+	/** Length of the range in scale units. */
+	totalUnits: number;
+	/** Offset of "today" from rangeStart in scale units (for initial scroll). */
 	todayOffset: number;
-	ticks: TimelineAxisTick[];
+	/** Stacked header rows (coarsest first), one per granularity level. */
+	tiers: TimelineAxisTier[];
 	lanes: TimelineLane[];
 	context: TimelineContext | null;
 	message: string | null;
@@ -51,11 +70,11 @@ export interface TimelineState {
 const EMPTY: TimelineState = {
 	hasRange: false,
 	scale: "week",
-	pxPerDay: 24,
+	pxPerUnit: 1,
 	rangeStart: new Date(),
-	totalDays: 0,
+	totalUnits: 0,
 	todayOffset: 0,
-	ticks: [],
+	tiers: [],
 	lanes: [],
 	context: null,
 	message: null,
