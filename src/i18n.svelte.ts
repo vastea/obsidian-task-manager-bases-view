@@ -19,6 +19,11 @@ export function getLocale(): Lang {
 
 const dict = {
 	// --- Kanban ---
+	kanbanViewName: { en: "Kanban", zh: "看板", de: "Kanban" },
+	timelineViewName: { en: "Timeline", zh: "时间线", de: "Zeitleiste" },
+	expandColumn: { en: "Expand column", zh: "展开列", de: "Spalte erweitern" },
+	columnGroup: { en: "Column", zh: "列", de: "Spalte" },
+	collapseColumn: { en: "Collapse column", zh: "折叠列", de: "Spalte einklappen" },
 	newItem: { en: "New item", zh: "新建工作项", de: "Neuer Eintrag" },
 	archiveAll: { en: "Archive all in column", zh: "归档本列全部任务", de: "Alle in Spalte archivieren" },
 	archiveAllTitle: { en: "Archive all tasks", zh: "归档全部任务", de: "Alle Aufgaben archivieren" },
@@ -155,7 +160,11 @@ const dict = {
 
 	// --- Settings ---
 	setLanguage: { en: "Language", zh: "语言", de: "Sprache" },
-	setLanguageDesc: { en: "Language for in-view buttons and menus.", zh: "视图内按钮与菜单的语言。", de: "Sprache für Schaltflächen und Menüs in den Ansichten." },
+	setLanguageDesc: {
+		en: "Language for plugin views, options, settings, buttons, and menus.",
+		zh: "插件视图、选项、设置、按钮与菜单所使用的语言。",
+		de: "Sprache für Plugin-Ansichten, Optionen, Einstellungen, Schaltflächen und Menüs.",
+	},
 	setViews: { en: "Views", zh: "视图", de: "Ansichten" },
 	setKanban: { en: "Kanban view", zh: "看板视图", de: "Kanban-Ansicht" },
 	setKanbanDesc: { en: "Register the tm-kanban Bases view.", zh: "注册 tm-kanban Bases 视图。", de: "Die tm-kanban-Bases-Ansicht registrieren." },
@@ -246,7 +255,7 @@ const dict = {
 		zh: "每行一个，格式 名称|颜色。颜色可用颜色名或任意 CSS 颜色，例如 Dev|blue（颜色名）或 Meeting|rgb(224,164,88)（RGB）。也可在日志行内联写：(Dev|blue)。",
 		de: "Eine pro Zeile als name|farbe. Farbe kann ein Farbname oder eine beliebige CSS-Farbe sein — z. B. Dev|blue (Name) oder Meeting|rgb(224,164,88) (RGB). Die Farbe kann auch inline in einer Protokollzeile stehen: (Dev|blue).",
 	},
-} as const;
+} as const satisfies Record<string, Record<Lang, string>>;
 
 export type MsgKey = keyof typeof dict;
 

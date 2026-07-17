@@ -6,6 +6,36 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-07-17
+
+### Added
+- **Timeline — quarter and year scales.** Timeline views can now use day, week,
+  month, quarter or year cells with a cumulative multi-tier header from year
+  down to the selected scale.
+- **Timeline — range and density controls.** Per-view padding, zoom and auto-zoom
+  options control how much time is shown and how densely it is rendered. A
+  configurable maximum cell budget keeps outlier ranges bounded while marking
+  items that fall beyond the displayed window.
+- **Timeline — snap to grid.** An opt-in plugin setting snaps dragged starts to
+  the first day of a scale unit and inclusive ends to its last day.
+- **German localisation.** The plugin now supports English, Chinese and German
+  across views, options, settings, menus, notices and accessibility labels.
+
+### Fixed
+- **Timeline — calendar-unit geometry.** Auto zoom now fits supported multi-year
+  ranges, and month/quarter/year padding uses whole calendar units without
+  partial edge cells or fixed-day approximations.
+- **Timeline — inclusive end snapping.** Resizing an end edge no longer snaps it
+  backwards to the first day of its unit; it snaps to the unit's final day.
+- **Timeline — symmetric out-of-range dragging.** Rendering remains clamped to
+  the visible track, while drag calculations use unbounded offsets so tasks can
+  move left or right beyond the current range consistently.
+- **Timeline — stable focus after drag.** The view scrolls to today only when it
+  first opens; later range changes preserve the user's current scroll position.
+- **Localisation completeness.** Bases view names, command labels and kanban
+  accessibility text now cover all three languages, with a compile-time check
+  preventing incomplete translation entries.
+
 ## [0.6.0] - 2026-06-16
 
 ### Added
@@ -171,7 +201,8 @@ Initial release.
   back-references.
 - English / 中文 localisation, switchable in settings.
 
-[Unreleased]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.6.0...HEAD
+[Unreleased]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.7.0...HEAD
+[0.7.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.6.0...0.7.0
 [0.6.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.5.1...0.6.0
 [0.5.1]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.5.0...0.5.1
 [0.5.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.4.1...0.5.0

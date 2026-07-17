@@ -60,7 +60,7 @@ The plugin is a thin renderer: change frontmatter / Bases config / drag → Base
 
 ### Other
 - **Click a task → right split.** Kanban/timeline items open the note in a reused detail pane (view on the left, note on the right). No custom detail view — the note *is* the detail.
-- **i18n**: English / 中文, switchable in settings (in‑view strings update live).
+- **i18n**: English / 中文 / Deutsch, switchable in settings (in-view strings update live).
 
 ## Install
 

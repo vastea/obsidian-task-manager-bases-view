@@ -6,17 +6,17 @@
 	const tl = $derived(getTimelineState());
 
 	let scrollEl = $state<HTMLDivElement | null>(null);
-	let scrolledFor = "";
+	let hasAutoScrolled = false;
 
 	const pxPerUnit = $derived(tl.pxPerUnit);
 	const trackWidth = $derived(tl.totalUnits * pxPerUnit);
 
-	// Scroll to "today" once per range so the relevant window is in view.
+	// Scroll to "today" once when this view first receives a range. Subsequent
+	// range changes come from data updates or drag commits and must preserve the
+	// user's current focus instead of snapping back to today.
 	$effect(() => {
-		// Once per range, so changing the density keeps the scroll position.
-		const key = `${tl.rangeStart.getTime()}`;
-		if (!scrollEl || !tl.hasRange || scrolledFor === key) return;
-		scrolledFor = key;
+		if (!scrollEl || !tl.hasRange || hasAutoScrolled) return;
+		hasAutoScrolled = true;
 		// When the whole track fits the pane there is nothing to scroll.
 		if (scrollEl.scrollWidth <= scrollEl.clientWidth) return;
 		const target = Math.max(0, tl.todayOffset * pxPerUnit - 160);
