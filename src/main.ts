@@ -19,7 +19,7 @@ export default class TaskManagerPlugin extends Plugin {
 
 		if (this.settings.enableKanban) {
 			const ok = this.registerBasesView(TM_KANBAN_VIEW, {
-				name: "Kanban",
+				name: t("kanbanViewName"),
 				icon: "square-kanban",
 				factory: (controller, containerEl) => new KanbanView(controller, containerEl),
 				options: kanbanViewOptions,
@@ -29,7 +29,7 @@ export default class TaskManagerPlugin extends Plugin {
 
 		if (this.settings.enableTimeline) {
 			const ok = this.registerBasesView(TM_TIMELINE_VIEW, {
-				name: "Timeline",
+				name: t("timelineViewName"),
 				icon: "gantt-chart",
 				factory: (controller, containerEl) => new TimelineView(controller, containerEl, this),
 				options: timelineViewOptions,
@@ -56,8 +56,8 @@ export default class TaskManagerPlugin extends Plugin {
 		);
 		this.addCommand({
 			id: TaskManagerPlugin.CALENDAR_COMMAND_ID,
-			// Command names are read once at registration; keep English + localized.
-			name: "Open weekly log / 打开周历日志",
+			// Command names are read once at registration; include every supported language.
+			name: "Open weekly log / 打开周历日志 / Wochenprotokoll öffnen",
 			callback: () => void this.activateCalendar(),
 		});
 	}

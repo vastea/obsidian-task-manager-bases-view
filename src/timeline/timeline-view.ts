@@ -205,10 +205,11 @@ export class TimelineView extends BasesView {
 			snap: (d) => (this.plugin.settings.snapToGrid ? startOfUnit(d, scale) : d),
 			snapEnd: (d) => (this.plugin.settings.snapToGrid ? endOfUnit(d, scale) : d),
 			offsetOf: (d) => clamp(offsetOf(d, geom.start, scale)),
-			dateAt: (offset) => dateAt(clamp(offset), geom.start, scale),
+			rawOffsetOf: (d) => offsetOf(d, geom.start, scale),
+			dateAt: (offset) => dateAt(offset, geom.start, scale),
 			isOutside: (d) => {
 				const raw = offsetOf(d, geom.start, scale);
-				return raw < 0 || raw > geom.units;
+				return raw < 0 || raw >= geom.units;
 			},
 		};
 

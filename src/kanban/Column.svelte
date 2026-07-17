@@ -48,7 +48,7 @@
 		class:is-drop-target={isDropTarget}
 		style:--tm-col-bg={column.color.bg}
 		style:--tm-col-accent={column.color.accent}
-		aria-label="Expand {column.label} column"
+		aria-label={`${t("expandColumn")}: ${column.label}`}
 		onclick={() => context.toggleCollapse(column)}
 		ondragover={onDragOver}
 		ondragenter={onDragEnter}
@@ -67,7 +67,7 @@
 		style:--tm-col-bg={column.color.bg}
 		style:--tm-col-accent={column.color.accent}
 		role="group"
-		aria-label="{column.label} column"
+		aria-label={`${t("columnGroup")}: ${column.label}`}
 		ondragover={onDragOver}
 		ondragenter={onDragEnter}
 		ondragleave={onDragLeave}
@@ -92,14 +92,14 @@
 				{#if column.canCreate}
 					<button
 						class="tm-icon-btn"
-						aria-label="New work item"
+						aria-label={t("newItem")}
 						onclick={() => context.createCard(column)}
 						use:icon={"plus"}
 					></button>
 				{/if}
 				<button
 					class="tm-icon-btn"
-					aria-label="Collapse column"
+					aria-label={t("collapseColumn")}
 					onclick={() => context.toggleCollapse(column)}
 					use:icon={"chevrons-left-right"}
 				></button>

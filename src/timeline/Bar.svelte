@@ -172,12 +172,12 @@
 
 	/** The date `delta` scale units away from `d`, snapped as a start. */
 	function shiftedStart(d: Date, delta: number): Date {
-		return context.snap(context.dateAt(context.offsetOf(d) + delta));
+		return context.snap(context.dateAt(context.rawOffsetOf(d) + delta));
 	}
 
 	/** The date `delta` scale units away from `d`, snapped as an inclusive end. */
 	function shiftedEnd(d: Date, delta: number): Date {
-		return context.snapEnd(context.dateAt(context.offsetOf(d) + delta));
+		return context.snapEnd(context.dateAt(context.rawOffsetOf(d) + delta));
 	}
 
 	function commit(mode: Mode, delta: number) {

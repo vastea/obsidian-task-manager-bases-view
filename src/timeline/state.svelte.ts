@@ -44,7 +44,9 @@ export interface TimelineContext {
 	snapEnd: (d: Date) => Date;
 	/** Offset of `d` from the range start, in scale units, clamped to the range. */
 	offsetOf: (d: Date) => number;
-	/** The date at `offset` scale units from the range start. */
+	/** Unclamped offset used as the base for drag calculations. */
+	rawOffsetOf: (d: Date) => number;
+	/** The date at `offset` scale units from the range start; accepts offsets outside the range. */
 	dateAt: (offset: number) => Date;
 	/** Whether `d` falls outside the shown range, so `offsetOf` clamped it. */
 	isOutside: (d: Date) => boolean;
