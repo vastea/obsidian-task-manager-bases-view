@@ -59,6 +59,12 @@ export function timelineViewOptions(config: BasesViewConfig): BasesAllOptions[] 
 					placeholder: t("optProperty"),
 					filter: (prop) => !prop.startsWith("file."),
 				},
+				{
+					type: "toggle",
+					key: "includeUndated",
+					displayName: t("optIncludeUndated"),
+					default: false,
+				},
 			],
 		},
 		{
@@ -181,9 +187,12 @@ export class TimelineView extends BasesView {
 		const ignoreMaxUnits = this.config.get("ignoreMaxUnits") === true;
 		const maxUnits = ignoreMaxUnits ? Infinity : this.plugin.settings.maxUnits;
 		const rangePadding = (this.config.get("rangePadding") as string | undefined) ?? "default";
+		// Show items that have neither a start nor an end date, anchored at the range start.
+		const includeUndated = this.config.get("includeUndated") === true;
 		// Drop values equal to the option defaults so the .base stays minimal.
 		if (this.config.get("rangePadding") === "default") this.config.set("rangePadding", null);
 		if (this.config.get("autoZoom") === false) this.config.set("autoZoom", null);
+		if (this.config.get("includeUndated") === false) this.config.set("includeUndated", null);
 		if (rawZoom != null && zoom === 100) this.config.set("zoom", null);
 
 		const writeEnabled = isWritable(startProp) && isWritable(endProp);
@@ -232,12 +241,13 @@ export class TimelineView extends BasesView {
 			return;
 		}
 
-		const makeRow = (entry: BasesEntry): TimelineRow => ({
-			file: entry.file,
-			title: entry.file.basename,
-			start: startProp ? getDate(this.app, entry, startProp) : null,
-			end: endProp ? getDate(this.app, entry, endProp) : null,
-		});
+		const makeRow = (entry: BasesEntry): TimelineRow => {
+			const start = startProp ? getDate(this.app, entry, startProp) : null;
+			const end = endProp ? getDate(this.app, entry, endProp) : null;
+			return { file: entry.file, title: entry.file.basename, start, end, undated: !start && !end };
+		};
+		// Items with neither date carry no anchor; keep them only when opted in.
+		const keep = (row: TimelineRow): boolean => includeUndated || !row.undated;
 
 		// Lanes follow Bases grouping: consume `data.groupedData` directly.
 		const groups = this.data.groupedData;
@@ -248,12 +258,12 @@ export class TimelineView extends BasesView {
 			for (const g of groups) {
 				const label = g.hasKey() ? (g.key?.toString() ?? "") : "—";
 				const id = g.hasKey() ? label : "__tm_null__";
-				const rows = g.entries.map(makeRow);
+				const rows = g.entries.map(makeRow).filter(keep);
 				allRows.push(...rows);
 				lanes.push({ id, label, rows });
 			}
 		} else {
-			const rows = (groups[0]?.entries ?? this.data.data).map(makeRow);
+			const rows = (groups[0]?.entries ?? this.data.data).map(makeRow).filter(keep);
 			allRows.push(...rows);
 			lanes.push({ id: "__all__", label: null, rows });
 		}

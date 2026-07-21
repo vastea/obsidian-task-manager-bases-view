@@ -49,20 +49,31 @@
 	const effEnd = $derived(hasPending ? pendingEnd : row.end);
 
 	const kind = $derived(
-		effStart && effEnd ? "bar" : effStart ? "milestone-start" : effEnd ? "milestone-end" : "none",
+		effStart && effEnd
+			? "bar"
+			: effStart
+				? "milestone-start"
+				: effEnd
+					? "milestone-end"
+					: row.undated
+						? "milestone-undated"
+						: "none",
 	);
+	// An undated item has no date of its own, so it anchors at the range start and
+	// a drag there sets its start — the same gesture as a start-only milestone.
+	const undatedAnchor = $derived(kind === "milestone-undated" ? context.dateAt(0) : null);
 
 	// Base geometry from the effective dates (without the live drag preview). The
 	// end offset is the day *after* the end date, so the bar covers that day.
-	const baseStart = $derived(effStart ? context.offsetOf(effStart) : null);
+	const baseStart = $derived(effStart ? context.offsetOf(effStart) : undatedAnchor ? 0 : null);
 	const baseEnd = $derived(effEnd ? context.offsetOf(addDays(effEnd, 1)) : null);
 
 	const geom = $derived(computeGeom(kind, baseStart, baseEnd, dragMode, dragDelta, pxPerUnit));
 
 	// Clamped to an edge: that end's real date lies beyond the range. Each end is
 	// judged on its own; a milestone's single date serves as both.
-	const firstDate = $derived(effStart ?? effEnd);
-	const lastDate = $derived(effEnd ?? effStart);
+	const firstDate = $derived(effStart ?? effEnd ?? undatedAnchor);
+	const lastDate = $derived(effEnd ?? effStart ?? undatedAnchor);
 	const firstOffset = $derived(baseStart ?? baseEnd);
 	const lastOffset = $derived(baseEnd ?? baseStart);
 	const outsideBefore = $derived(!!firstDate && context.isOutside(firstDate) && firstOffset === 0);
@@ -218,6 +229,10 @@
 			if (sameDay(ne, e)) return;
 			context.write(row.file, { end: ne });
 			setPending(null, ne);
+		} else if (kind === "milestone-undated" && undatedAnchor) {
+			const ns = shiftedStart(undatedAnchor, delta);
+			context.write(row.file, { start: ns });
+			setPending(ns, null);
 		}
 	}
 

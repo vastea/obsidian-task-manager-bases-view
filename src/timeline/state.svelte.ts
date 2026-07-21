@@ -8,6 +8,8 @@ export interface TimelineRow {
 	/** Start/end as local-midnight Dates, or null when that end is unset. */
 	start: Date | null;
 	end: Date | null;
+	/** True when neither date is set; the bar anchors at the range start. */
+	undated: boolean;
 }
 
 export interface TimelineLane {
