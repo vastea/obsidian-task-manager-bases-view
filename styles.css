@@ -464,7 +464,7 @@
 	top: 6px;
 	height: 24px;
 	background: var(--tm-bar-accent, var(--interactive-accent));
-	color: var(--text-on-accent);
+	color: var(--tm-bar-text, var(--text-on-accent));
 	border-radius: var(--radius-s);
 	display: flex;
 	align-items: center;
@@ -486,6 +486,7 @@
 }
 .tm-bar.is-outside {
 	background: color-mix(in srgb, var(--tm-bar-accent, var(--interactive-accent)) 60%, transparent);
+	color: color-mix(in srgb, var(--tm-bar-text, var(--text-on-accent)) 60%, transparent);
 	outline: 2px dashed var(--text-muted);
 	outline-offset: -2px;
 	/* The marker belongs to the box, so it is cut with it rather than floating
@@ -571,7 +572,7 @@
 }
 .tm-milestone-label {
 	font-size: var(--font-ui-smaller);
-	color: var(--text-muted);
+	color: var(--tm-bar-text, var(--text-muted));
 	white-space: nowrap;
 	pointer-events: none;
 }

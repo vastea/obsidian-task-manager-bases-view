@@ -141,6 +141,11 @@ const dict = {
 		zh: "颜色规则（property|value|colour，或仅属性名；首个匹配生效）",
 		de: "Farbregeln (property|value|colour, oder nur Eigenschaft; erster Treffer gewinnt)",
 	},
+	optTextColorRules: {
+		en: "Text colour rules (property|value|colour, or a bare property; first match wins)",
+		zh: "文本颜色规则（property|value|colour，或仅属性名；首个匹配生效）",
+		de: "Textfarb-Regeln (property|value|colour, oder nur Eigenschaft; erster Treffer gewinnt)",
+	},
 	optTextRules: {
 		en: "Text rules (property|value|flags…, or a bare property; flags: strike underline bold italic)",
 		zh: "文本规则（property|value|flags…，或仅属性名；标志：strike underline bold italic）",

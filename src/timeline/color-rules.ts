@@ -5,6 +5,7 @@ import { getRawFrontmatterByName } from "../shared/entry-accessor";
 /** Resolved visual style for one bar: a fill colour (null = theme accent) and text flags. */
 export interface BarStyle {
 	color: ColumnColor | null;
+	textColor: ColumnColor | null;
 	strike: boolean;
 	underline: boolean;
 	bold: boolean;
@@ -103,10 +104,17 @@ function resolveText(
 	return off;
 }
 
-/** Resolve a note's bar style from the colour and text rule lists, or null when nothing applies. */
-export function resolveBarStyle(app: App, file: TFile, colorRules: Rule[], textRules: Rule[]): BarStyle | null {
+/** Resolve a note's bar style from the colour, text-colour and text rule lists, or null when nothing applies. */
+export function resolveBarStyle(
+	app: App,
+	file: TFile,
+	colorRules: Rule[],
+	textColorRules: Rule[],
+	textRules: Rule[],
+): BarStyle | null {
 	const color = resolveColor(app, file, colorRules);
+	const textColor = resolveColor(app, file, textColorRules);
 	const text = resolveText(app, file, textRules);
-	if (!color && !text.strike && !text.underline && !text.bold && !text.italic) return null;
-	return { color, ...text };
+	if (!color && !textColor && !text.strike && !text.underline && !text.bold && !text.italic) return null;
+	return { color, textColor, ...text };
 }
