@@ -239,6 +239,11 @@
 			class:is-outside={outside}
 			class:is-start-clamped={startClamped}
 			class:is-outside-after={outsideAfter}
+			class:is-strike={row.style?.strike}
+			class:is-underline={row.style?.underline}
+			class:is-bold={row.style?.bold}
+			class:is-italic={row.style?.italic}
+			style:--tm-bar-accent={row.style?.color?.accent ?? null}
 			style:left={geom.left != null ? `${geom.left}px` : null}
 			style:right={geom.right != null ? `${geom.right}px` : null}
 			style:width={geom.width != null ? `${geom.width}px` : null}
@@ -273,6 +278,11 @@
 			class:is-dragging={dragMode !== null}
 			class:is-outside={outside}
 			class:is-start-clamped={startClamped}
+			class:is-strike={row.style?.strike}
+			class:is-underline={row.style?.underline}
+			class:is-bold={row.style?.bold}
+			class:is-italic={row.style?.italic}
+			style:--tm-bar-accent={row.style?.color?.accent ?? null}
 			style:left={geom.left != null ? `${geom.left}px` : null}
 			style:right={geom.right != null ? `${geom.right}px` : null}
 			role="button"

@@ -6,6 +6,14 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Timeline colour rules: per-view **Colour rules** and **Text rules** lists colour
+  individual bars and style their labels, matched on a note property
+  (`property|value|output`) or read straight from a note property (bare
+  `property`). First match wins per list; colours accept a name/hex/`rgb(...)`,
+  text accepts `strike underline bold italic`.
+
 ## [0.8.0] - 2026-07-17
 
 ### Added

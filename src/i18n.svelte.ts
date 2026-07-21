@@ -135,6 +135,17 @@ const dict = {
 		zh: "忽略最大单元格数限制",
 		de: "Max.-Zellen-Beschränkung ignorieren",
 	},
+	optColors: { en: "Colours", zh: "颜色", de: "Farben" },
+	optColorRules: {
+		en: "Colour rules (property|value|colour, or a bare property; first match wins)",
+		zh: "颜色规则（property|value|colour，或仅属性名；首个匹配生效）",
+		de: "Farbregeln (property|value|colour, oder nur Eigenschaft; erster Treffer gewinnt)",
+	},
+	optTextRules: {
+		en: "Text rules (property|value|flags…, or a bare property; flags: strike underline bold italic)",
+		zh: "文本规则（property|value|flags…，或仅属性名；标志：strike underline bold italic）",
+		de: "Textregeln (property|value|flags…, oder nur Eigenschaft; Flags: strike underline bold italic)",
+	},
 	barOutside: { en: "Outside the shown range", zh: "超出显示范围", de: "Außerhalb des gezeigten Bereichs" },
 	optPadding: { en: "Padding", zh: "内边距", de: "Polsterung" },
 	rangeDefault: { en: "Default", zh: "默认", de: "Standard" },

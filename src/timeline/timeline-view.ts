@@ -18,6 +18,7 @@ import {
 	setTimelineState,
 } from "./state.svelte";
 import { getDate } from "../shared/entry-accessor";
+import { parseRules, resolveBarStyle } from "./color-rules";
 import { isWritable, writeProperty } from "../shared/frontmatter-writer";
 import { openDetail } from "../shared/open-detail";
 import { getLocale, t } from "../i18n.svelte";
@@ -110,6 +111,22 @@ export function timelineViewOptions(config: BasesViewConfig): BasesAllOptions[] 
 					key: "ignoreMaxUnits",
 					displayName: t("optIgnoreMaxUnits"),
 					default: false,
+				},
+			],
+		},
+		{
+			type: "group",
+			displayName: t("optColors"),
+			items: [
+				{
+					type: "multitext",
+					key: "colorRules",
+					displayName: t("optColorRules"),
+				},
+				{
+					type: "multitext",
+					key: "textRules",
+					displayName: t("optTextRules"),
 				},
 			],
 		},
@@ -230,11 +247,15 @@ export class TimelineView extends BasesView {
 			return;
 		}
 
+		const colorRules = parseRules((this.config.get("colorRules") as string[] | undefined) ?? []);
+		const textRules = parseRules((this.config.get("textRules") as string[] | undefined) ?? []);
+
 		const makeRow = (entry: BasesEntry): TimelineRow => ({
 			file: entry.file,
 			title: entry.file.basename,
 			start: startProp ? getDate(this.app, entry, startProp) : null,
 			end: endProp ? getDate(this.app, entry, endProp) : null,
+			style: resolveBarStyle(this.app, entry.file, colorRules, textRules),
 		});
 
 		// Lanes follow Bases grouping: consume `data.groupedData` directly.

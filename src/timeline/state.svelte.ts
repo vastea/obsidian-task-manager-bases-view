@@ -1,4 +1,5 @@
 import type { BasesPropertyId, RenderContext, TFile } from "obsidian";
+import type { BarStyle } from "./color-rules";
 
 export type TimelineScale = "day" | "week" | "month" | "quarter" | "year";
 
@@ -8,6 +9,8 @@ export interface TimelineRow {
 	/** Start/end as local-midnight Dates, or null when that end is unset. */
 	start: Date | null;
 	end: Date | null;
+	/** Colour/text style resolved from the view's colour rules, or null for the default accent. */
+	style: BarStyle | null;
 }
 
 export interface TimelineLane {
