@@ -82,12 +82,20 @@ const EMPTY: TimelineState = {
 	message: null,
 };
 
-let state = $state<TimelineState>(EMPTY);
-
-export function getTimelineState(): TimelineState {
-	return state;
+export interface TimelineStore {
+	readonly value: TimelineState;
+	set(next: TimelineState): void;
 }
 
-export function setTimelineState(next: TimelineState): void {
-	state = next;
+/** A reactive state holder scoped to one view instance. */
+export function createTimelineStore(): TimelineStore {
+	let state = $state<TimelineState>(EMPTY);
+	return {
+		get value() {
+			return state;
+		},
+		set(next: TimelineState) {
+			state = next;
+		},
+	};
 }

@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { getTimelineState } from "./state.svelte";
+	import type { TimelineStore } from "./state.svelte";
 	import { t } from "../i18n.svelte";
 	import Bar from "./Bar.svelte";
 
-	const tl = $derived(getTimelineState());
+	let { store }: { store: TimelineStore } = $props();
+	const tl = $derived(store.value);
 
 	let scrollEl = $state<HTMLDivElement | null>(null);
 	let hasAutoScrolled = false;

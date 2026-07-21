@@ -15,7 +15,8 @@ import {
 	type TimelineLane,
 	type TimelineRow,
 	type TimelineScale,
-	setTimelineState,
+	type TimelineStore,
+	createTimelineStore,
 } from "./state.svelte";
 import { getDate } from "../shared/entry-accessor";
 import { isWritable, writeProperty } from "../shared/frontmatter-writer";
@@ -121,6 +122,7 @@ export class TimelineView extends BasesView {
 	type = TM_TIMELINE_VIEW;
 	private containerEl: HTMLElement;
 	private component: Record<string, unknown> | null = null;
+	private store: TimelineStore = createTimelineStore();
 	private resizeObserver: ResizeObserver | null = null;
 	private ready = false;
 
@@ -135,7 +137,7 @@ export class TimelineView extends BasesView {
 
 	override onload(): void {
 		this.containerEl.addClass("tm-timeline-root");
-		this.component = mount(Timeline, { target: this.containerEl });
+		this.component = mount(Timeline, { target: this.containerEl, props: { store: this.store } });
 		// Recompute density (fit-to-pane) when the view is resized.
 		this.resizeObserver = new ResizeObserver(() => {
 			if (this.ready) this.onDataUpdated();
@@ -215,7 +217,7 @@ export class TimelineView extends BasesView {
 
 		if (!startProp && !endProp) {
 			this.ready = true;
-			setTimelineState({
+			this.store.set({
 				hasRange: false,
 				scale,
 				pxPerUnit: 1,
@@ -357,7 +359,7 @@ export class TimelineView extends BasesView {
 		const todayOffset = offsetOf(today, rangeStart, scale);
 		this.ready = true;
 
-		setTimelineState({
+		this.store.set({
 			hasRange: true,
 			scale,
 			pxPerUnit,
