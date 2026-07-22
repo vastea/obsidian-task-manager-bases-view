@@ -125,6 +125,11 @@ const dict = {
 	optDates: { en: "Dates", zh: "日期", de: "Daten" },
 	optStartProp: { en: "Start date property", zh: "开始日期属性", de: "Startdatum-Eigenschaft" },
 	optEndProp: { en: "End date property", zh: "结束日期属性", de: "Enddatum-Eigenschaft" },
+	optIncludeUndated: {
+		en: "Include items without dates",
+		zh: "包含无日期的条目",
+		de: "Einträge ohne Datum anzeigen",
+	},
 	optProperty: { en: "Property", zh: "属性", de: "Eigenschaft" },
 	optScale: { en: "Scale", zh: "刻度", de: "Skala" },
 	optSize: { en: "Size", zh: "大小", de: "Größe" },
