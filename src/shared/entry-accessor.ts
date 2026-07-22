@@ -1,4 +1,4 @@
-import { type App, type BasesEntry, type BasesPropertyId, type Value, parsePropertyId } from "obsidian";
+import { type App, type BasesEntry, type BasesPropertyId, type TFile, type Value, parsePropertyId } from "obsidian";
 
 /**
  * Safe reads from a BasesEntry / its backing frontmatter.
@@ -25,12 +25,17 @@ export function getString(entry: BasesEntry, propId: BasesPropertyId): string | 
 	return s.length > 0 ? s : null;
 }
 
+/** Raw frontmatter value for a property named directly (not a BasesPropertyId). */
+export function getRawFrontmatterByName(app: App, file: TFile, name: string): unknown {
+	const fm = app.metadataCache.getFileCache(file)?.frontmatter;
+	return fm ? fm[name] : undefined;
+}
+
 /** Raw frontmatter value for a `note.*` property, read straight from the cache. */
 export function getRawFrontmatter(app: App, entry: BasesEntry, propId: BasesPropertyId): unknown {
 	const parsed = parsePropertyId(propId);
 	if (parsed.type !== "note") return undefined;
-	const fm = app.metadataCache.getFileCache(entry.file)?.frontmatter;
-	return fm ? fm[parsed.name] : undefined;
+	return getRawFrontmatterByName(app, entry.file, parsed.name);
 }
 
 /**

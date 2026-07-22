@@ -19,6 +19,7 @@ import {
 	createTimelineStore,
 } from "./state.svelte";
 import { getDate } from "../shared/entry-accessor";
+import { parseRules, resolveBarStyle } from "./color-rules";
 import { isWritable, writeProperty } from "../shared/frontmatter-writer";
 import { openDetail } from "../shared/open-detail";
 import { getLocale, t } from "../i18n.svelte";
@@ -117,6 +118,27 @@ export function timelineViewOptions(config: BasesViewConfig): BasesAllOptions[] 
 					key: "ignoreMaxUnits",
 					displayName: t("optIgnoreMaxUnits"),
 					default: false,
+				},
+			],
+		},
+		{
+			type: "group",
+			displayName: t("optColors"),
+			items: [
+				{
+					type: "multitext",
+					key: "colorRules",
+					displayName: t("optColorRules"),
+				},
+				{
+					type: "multitext",
+					key: "textColorRules",
+					displayName: t("optTextColorRules"),
+				},
+				{
+					type: "multitext",
+					key: "textRules",
+					displayName: t("optTextRules"),
 				},
 			],
 		},
@@ -241,10 +263,21 @@ export class TimelineView extends BasesView {
 			return;
 		}
 
+		const colorRules = parseRules((this.config.get("colorRules") as string[] | undefined) ?? []);
+		const textColorRules = parseRules((this.config.get("textColorRules") as string[] | undefined) ?? []);
+		const textRules = parseRules((this.config.get("textRules") as string[] | undefined) ?? []);
+
 		const makeRow = (entry: BasesEntry): TimelineRow => {
 			const start = startProp ? getDate(this.app, entry, startProp) : null;
 			const end = endProp ? getDate(this.app, entry, endProp) : null;
-			return { file: entry.file, title: entry.file.basename, start, end, undated: !start && !end };
+			return {
+				file: entry.file,
+				title: entry.file.basename,
+				start,
+				end,
+				undated: !start && !end,
+				style: resolveBarStyle(this.app, entry.file, colorRules, textColorRules, textRules),
+			};
 		};
 		// Items with neither date carry no anchor; keep them only when opted in.
 		const keep = (row: TimelineRow): boolean => includeUndated || !row.undated;
