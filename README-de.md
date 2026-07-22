@@ -34,7 +34,7 @@ Das Plugin ist eine dünne Darstellungsschicht: Frontmatter, Bases-Konfiguration
 
 - **Start-/Enddatum-Eigenschaften** werden in den Ansichtsoptionen gewählt; `scale` unterstützt Tag, Woche, Monat, Quartal und Jahr.
 - **Bahnen folgen der Bases-Gruppierung** (eine Bahn pro Gruppe); ohne Gruppierung wird eine flache Liste angezeigt.
-- Start und Ende ergeben einen Balken, nur ein Enddatum einen **Meilenstein**, fehlende Daten nur eine Beschriftung.
+- Start und Ende ergeben einen Balken, nur ein Datum einen **Meilenstein**. Einträge ohne Datum sind standardmäßig ausgeblendet; mit **Einträge ohne Datum anzeigen** erscheinen sie als temporäre Meilensteine am Bereichsanfang und erhalten beim Ziehen ein Startdatum.
 - **Mehrstufige Kopfzeile** — kumulativ von Jahr → Quartal → Monat → Woche → Tag, mit der gröbsten Ebene oben. Jede Zelle zeigt nur ihre eigene Einheit, die Rasterlinien folgen der feinsten Ebene.
 - **Abstand** bestimmt den sichtbaren Zeitraum: `default` (unverändert), `moderate` (eine ganze Skaleneinheit an beiden Seiten) oder `fit` (auf ganze Einheiten um die Einträge zuschneiden). Teilzellen am Rand werden so weit verbreitert, dass ihre Beschriftung lesbar bleibt.
 - **Zoom** bestimmt unabhängig davon die Darstellungsdichte. **Automatischer Zoom** leitet sie aus der Breite der Ansicht ab, sodass der gesamte Zeitraum ohne horizontales Scrollen passt. Ist er deaktiviert, stellt ein Regler die Dichte relativ zum Standard der Skala ein.
@@ -111,11 +111,13 @@ Jede Ansicht kann unabhängig aktiviert werden. Kalender- und Timeline-Einstellu
 | Kanban | `doneStatuses` | Spaltenwerte, die als erledigt gelten und die gemeinsame Archivaktion erhalten. |
 | Kanban | `archiveValue` | Wert, den Archivieren oder gemeinsames Archivieren schreibt. |
 | Timeline | `startProp` / `endProp` | Datumseigenschaften für die beiden Balkenenden. |
+| Timeline | `includeUndated` | Blendet undatierte Einträge als ziehbare Meilensteine am Bereichsanfang ein. |
 | Timeline | `scale` | Rastereinheit der Kopfzeile: `day` / `week` / `month` / `quarter` / `year`. |
 | Timeline | `rangePadding` | Freier Zeitraum um Einträge: `default` / `moderate` / `fit`. |
 | Timeline | `autoZoom` | Dichte aus der Ansichtsbreite ableiten, damit der Zeitraum vollständig passt. |
 | Timeline | `zoom` | Dichte als Prozentwert des Skalenstandards (10–200; 100 ist der Standard). |
 | Timeline | `ignoreMaxUnits` | Den vollständigen Zeitraum unabhängig von der globalen maximalen Zellenzahl zeichnen. |
+| Timeline | `colorRules` / `textColorRules` / `textRules` | Erste passende Regel für Balkenfüllung, Beschriftungsfarbe und Beschriftungsstil. |
 
 ## Beispiel-Vault
 

@@ -6,6 +6,8 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-07-22
+
 ### Added
 
 - Timeline colour rules: per-view **Colour rules**, **Text colour rules** and
@@ -13,6 +15,15 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   matched on a note property (`property|value|output`) or read straight from a
   note property (bare `property`). First match wins per list; colours accept a
   name/hex/`rgb(...)`, text accepts `strike underline bold italic`.
+- Timeline views can optionally show items without start or end dates as
+  milestones at the beginning of the visible range; dragging one assigns its
+  start date. They remain hidden by default to keep timelines focused.
+
+### Fixed
+
+- Timeline state is now scoped to each view instance, so multiple timelines on
+  the same page no longer overwrite one another's data, scale, ordering or
+  colours.
 
 ## [0.8.0] - 2026-07-17
 
@@ -232,7 +243,8 @@ Initial release.
   back-references.
 - English / 中文 localisation, switchable in settings.
 
-[Unreleased]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.8.0...HEAD
+[Unreleased]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.9.0...HEAD
+[0.9.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.8.0...0.9.0
 [0.8.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.7.2...0.8.0
 [0.7.1]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.7.0...0.7.1
 [0.7.0]: https://github.com/vastea/obsidian-task-manager-bases-view/compare/0.6.0...0.7.0

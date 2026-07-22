@@ -32,7 +32,7 @@ The plugin is a thin renderer: change frontmatter / Bases config / drag → Base
 ### Timeline (`tm-timeline`)
 - **Start / end** date properties chosen in view options; `scale` = day / week / month / quarter / year (coarser scales keep multi‑year plans on screen).
 - **Lanes follow Bases group‑by** (one lane per group) or a flat list when ungrouped.
-- Bars for start+end, **milestone** dots for a single end, label‑only for no dates.
+- Bars for start+end and **milestone** dots for a single date. Items without dates are hidden by default; enable **Include items without dates** to show them as temporary milestones at the range start, then drag one to assign its start date.
 - **Multi‑tier header** — a stacked, cumulative header (year → quarter → month → week → day, coarsest on top); each cell shows only its own unit, centered, and grid lines follow the finest tier.
 - **Padding** — *which* time range is shown: `default` (unchanged), `moderate` (one whole scale unit each side), or `fit` (trim to whole scale units around the items). Partial first/last cells are widened just enough for their header label to fit.
 - **Zoom** — *how densely* that range is drawn (independent of padding). **Auto zoom** derives the density from the pane width so the whole range fits without horizontal scrolling; with it off, a **Zoom** slider sets the density as a percentage of the scale's default (100 % = the default look, higher values zoom in).
@@ -102,11 +102,13 @@ Each view can be turned off independently, and the calendar's settings appear on
 | kanban | `doneStatuses` | Column values treated as “done” (gets the archive‑all action). |
 | kanban | `archiveValue` | Value written by right‑click → Archive / Archive‑all. |
 | timeline | `startProp` / `endProp` | Date properties for the bar ends. |
+| timeline | `includeUndated` | Show otherwise-hidden undated items as draggable milestones at the range start. |
 | timeline | `scale` | Header tick granularity: `day` / `week` / `month` / `quarter` / `year`. |
 | timeline | `rangePadding` | Empty time around the items: `default` / `moderate` / `fit`. |
 | timeline | `autoZoom` | Derive density from the pane width so the whole range fits (hides the zoom slider). |
 | timeline | `zoom` | Density as a percentage of the scale's default (10 – 200, 100 = default). |
 | timeline | `ignoreMaxUnits` | Draw the whole range regardless of the **Max cells** plugin setting, at the render cost. |
+| timeline | `colorRules` / `textColorRules` / `textRules` | First-match rules for bar fill, label colour and label style. |
 
 ## Example vault
 
