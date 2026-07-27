@@ -283,7 +283,7 @@
 			{#if outside}
 				<span class="tm-bar-outside" use:icon={"alert-triangle"}></span>
 			{/if}
-			<span class="tm-bar-label">{row.title}</span>
+			<span class="tm-bar-label">{row.displayError ? "⚠ " : ""}{row.title}</span>
 			{#if outsideAfter}
 				<span class="tm-bar-outside" use:icon={"chevron-right"}></span>
 			{/if}
@@ -320,7 +320,7 @@
 			{#if outside}
 				<span class="tm-bar-outside" use:icon={"alert-triangle"}></span>
 			{/if}
-			<span class="tm-milestone-label">{row.title}</span>
+			<span class="tm-milestone-label">{row.displayError ? "⚠ " : ""}{row.title}</span>
 		</div>
 	{/if}
 {/if}

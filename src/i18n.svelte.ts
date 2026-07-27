@@ -51,6 +51,42 @@ const dict = {
 		zh: "请在视图选项里选择开始/结束日期属性。",
 		de: "Wähle in den Ansichtsoptionen eine Start- und/oder Enddatum-Eigenschaft.",
 	},
+	timelineChooseDisplayProperty: {
+		en: "Choose exactly one property in the Bases Properties menu, or turn off property-based labels in view options.",
+		zh: "请在 Bases 的属性菜单中选择且仅选择一个属性，或在视图选项中关闭属性显示。",
+		de: "Wähle im Eigenschaften-Menü von Bases genau eine Eigenschaft oder deaktiviere eigenschaftsbasierte Beschriftungen in den Ansichtsoptionen.",
+	},
+	timelineChooseOnlyOneDisplayProperty: {
+		en: "Property-based labels require exactly one visible property. Remove the extra properties in the Bases Properties menu.",
+		zh: "属性显示模式要求有且只能有一个可见属性。请在 Bases 的属性菜单中移除多余属性。",
+		de: "Eigenschaftsbasierte Beschriftungen erfordern genau eine sichtbare Eigenschaft. Entferne zusätzliche Eigenschaften im Eigenschaften-Menü von Bases.",
+	},
+	timelineDisplayValueEmpty: {
+		en: "“{property}” has no value",
+		zh: "“{property}”没有值",
+		de: "„{property}“ hat keinen Wert",
+	},
+	timelineDisplayValueError: {
+		en: "“{property}” returned an error",
+		zh: "“{property}”返回错误",
+		de: "„{property}“ hat einen Fehler zurückgegeben",
+	},
+	timelineInvalidDisplayValues: {
+		en: "{count} item(s) have an empty or invalid “{property}” display value.",
+		zh: "{count} 个条目的显示属性“{property}”为空或无效。",
+		de: "Bei {count} Einträgen ist der Anzeigewert „{property}“ leer oder ungültig.",
+	},
+	timelinePropertyHintTitle: {
+		en: "Property-based timeline labels",
+		zh: "使用属性显示时间线标签",
+		de: "Eigenschaftsbasierte Timeline-Beschriftungen",
+	},
+	timelinePropertyHintBody: {
+		en: "This mode requires exactly one visible property, and every displayed item should have a valid value. In the Bases filter menu, you can exclude items where that property is empty to avoid display warnings.",
+		zh: "此模式要求有且只能有一个可见属性，并且每个显示条目都应具有有效值。你可以在 Bases 的筛选菜单中排除该属性为空的条目，以避免显示警告。",
+		de: "Dieser Modus erfordert genau eine sichtbare Eigenschaft und jeder angezeigte Eintrag sollte einen gültigen Wert haben. Im Filter-Menü von Bases kannst du Einträge mit leerem Wert ausschließen, um Anzeigewarnungen zu vermeiden.",
+	},
+	gotIt: { en: "Got it", zh: "知道了", de: "Verstanden" },
 
 	// --- Calendar ---
 	weeklyLog: { en: "Weekly log", zh: "周历日志", de: "Wochenprotokoll" },
@@ -129,6 +165,11 @@ const dict = {
 		en: "Include items without dates",
 		zh: "包含无日期的条目",
 		de: "Einträge ohne Datum anzeigen",
+	},
+	optUsePropertyDisplay: {
+		en: "Use the visible property as item labels",
+		zh: "使用可见属性作为条目标签",
+		de: "Sichtbare Eigenschaft als Eintragsbeschriftung verwenden",
 	},
 	optProperty: { en: "Property", zh: "属性", de: "Eigenschaft" },
 	optScale: { en: "Scale", zh: "刻度", de: "Skala" },
