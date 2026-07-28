@@ -6,6 +6,18 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-07-28
+
+### Added
+
+- Timeline labels can optionally use exactly one property selected in the Bases
+  **Properties** menu, including `file.*`, `note.*` and formula properties. The
+  same rendered value appears in the sticky label column and on the timeline
+  bar, with a per-view label-width control.
+- Property-based label mode guides users to filter empty values, blocks invalid
+  zero- or multi-property configurations, and reports empty or formula-error
+  values in place instead of silently falling back to the filename.
+
 ## [0.9.0] - 2026-07-22
 
 ### Added

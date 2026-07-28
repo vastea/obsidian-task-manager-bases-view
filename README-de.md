@@ -33,6 +33,7 @@ Das Plugin ist eine dünne Darstellungsschicht: Frontmatter, Bases-Konfiguration
 ### Timeline (`tm-timeline`)
 
 - **Start-/Enddatum-Eigenschaften** werden in den Ansichtsoptionen gewählt; `scale` unterstützt Tag, Woche, Monat, Quartal und Jahr.
+- **Eigenschaftsbasierte Beschriftungen** (optional): **Sichtbare Eigenschaft als Eintragsbeschriftung verwenden** aktivieren und im Bases-Menü **Eigenschaften** genau eine Eigenschaft auswählen. Ihr gerenderter Wert — einschließlich `file.*`, `note.*` und Formeln — ersetzt den Dateinamen sowohl in der fixierten Beschriftungsspalte als auch im Timeline-Balken. Leere oder fehlerhafte Werte bleiben als Warnung sichtbar und können bei Bedarf per Bases-Filter ausgeschlossen werden. Die **Beschriftungsbreite** ist pro Ansicht einstellbar.
 - **Bahnen folgen der Bases-Gruppierung** (eine Bahn pro Gruppe); ohne Gruppierung wird eine flache Liste angezeigt.
 - Start und Ende ergeben einen Balken, nur ein Datum einen **Meilenstein**. Einträge ohne Datum sind standardmäßig ausgeblendet; mit **Einträge ohne Datum anzeigen** erscheinen sie als temporäre Meilensteine am Bereichsanfang und erhalten beim Ziehen ein Startdatum.
 - **Mehrstufige Kopfzeile** — kumulativ von Jahr → Quartal → Monat → Woche → Tag, mit der gröbsten Ebene oben. Jede Zelle zeigt nur ihre eigene Einheit, die Rasterlinien folgen der feinsten Ebene.
@@ -111,6 +112,7 @@ Jede Ansicht kann unabhängig aktiviert werden. Kalender- und Timeline-Einstellu
 | Kanban | `doneStatuses` | Spaltenwerte, die als erledigt gelten und die gemeinsame Archivaktion erhalten. |
 | Kanban | `archiveValue` | Wert, den Archivieren oder gemeinsames Archivieren schreibt. |
 | Timeline | `startProp` / `endProp` | Datumseigenschaften für die beiden Balkenenden. |
+| Timeline | `usePropertyDisplay` / `labelWidth` | Genau eine in Bases sichtbare Eigenschaft als Beschriftung verwenden und die Breite der fixierten Spalte festlegen. |
 | Timeline | `includeUndated` | Blendet undatierte Einträge als ziehbare Meilensteine am Bereichsanfang ein. |
 | Timeline | `scale` | Rastereinheit der Kopfzeile: `day` / `week` / `month` / `quarter` / `year`. |
 | Timeline | `rangePadding` | Freier Zeitraum um Einträge: `default` / `moderate` / `fit`. |

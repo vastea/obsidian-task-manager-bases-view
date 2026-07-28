@@ -31,6 +31,7 @@ The plugin is a thin renderer: change frontmatter / Bases config / drag → Base
 
 ### Timeline (`tm-timeline`)
 - **Start / end** date properties chosen in view options; `scale` = day / week / month / quarter / year (coarser scales keep multi‑year plans on screen).
+- **Property-based labels** (optional): enable **Use the visible property as item labels**, then select exactly one entry in the Bases **Properties** menu. Its rendered value — including `file.*`, `note.*` and formula properties — replaces the filename in both the sticky label column and timeline bar. Empty or invalid values stay visible as warnings; use a Bases filter to exclude them when appropriate. **Label width** adjusts the sticky column per view.
 - **Lanes follow Bases group‑by** (one lane per group) or a flat list when ungrouped.
 - Bars for start+end and **milestone** dots for a single date. Items without dates are hidden by default; enable **Include items without dates** to show them as temporary milestones at the range start, then drag one to assign its start date.
 - **Multi‑tier header** — a stacked, cumulative header (year → quarter → month → week → day, coarsest on top); each cell shows only its own unit, centered, and grid lines follow the finest tier.
@@ -102,6 +103,7 @@ Each view can be turned off independently, and the calendar's settings appear on
 | kanban | `doneStatuses` | Column values treated as “done” (gets the archive‑all action). |
 | kanban | `archiveValue` | Value written by right‑click → Archive / Archive‑all. |
 | timeline | `startProp` / `endProp` | Date properties for the bar ends. |
+| timeline | `usePropertyDisplay` / `labelWidth` | Use exactly one Bases-visible property for labels and set the sticky label-column width. |
 | timeline | `includeUndated` | Show otherwise-hidden undated items as draggable milestones at the range start. |
 | timeline | `scale` | Header tick granularity: `day` / `week` / `month` / `quarter` / `year`. |
 | timeline | `rangePadding` | Empty time around the items: `default` / `moderate` / `fit`. |
