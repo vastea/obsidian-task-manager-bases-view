@@ -3,6 +3,7 @@ import {
 	type BasesEntry,
 	type BasesViewConfig,
 	type QueryController,
+	type Value,
 	BasesView,
 } from "obsidian";
 import { mount, unmount } from "svelte";
@@ -18,11 +19,12 @@ import {
 	type TimelineStore,
 	createTimelineStore,
 } from "./state.svelte";
-import { getDate } from "../shared/entry-accessor";
+import { getDate, getValue } from "../shared/entry-accessor";
 import { parseRules, resolveBarStyle } from "./color-rules";
 import { isWritable, writeProperty } from "../shared/frontmatter-writer";
 import { openDetail } from "../shared/open-detail";
 import { getLocale, t } from "../i18n.svelte";
+import { TimelinePropertyDisplayModal } from "./property-display-modal";
 import {
 	addDays,
 	addMonths,
@@ -38,10 +40,19 @@ export const TM_TIMELINE_VIEW = "tm-timeline";
 
 /** Width (px) of one cell at zoom 100%, per scale. */
 const PX_DEFAULT: Record<TimelineScale, number> = { day: 48, week: 154, month: 244, quarter: 274, year: 365 };
+const LABEL_WIDTH_DEFAULT = 180;
+const LABEL_WIDTH_MIN = 120;
+const LABEL_WIDTH_MAX = 480;
 
 
 export function timelineViewOptions(config: BasesViewConfig): BasesAllOptions[] {
 	const options: BasesAllOptions[] = [
+		{
+			type: "toggle",
+			key: "usePropertyDisplay",
+			displayName: t("optUsePropertyDisplay"),
+			default: false,
+		},
 		{
 			type: "group",
 			displayName: t("optDates"),
@@ -85,6 +96,16 @@ export function timelineViewOptions(config: BasesViewConfig): BasesAllOptions[] 
 			type: "group",
 			displayName: t("optSize"),
 			items: [
+				{
+					type: "slider",
+					key: "labelWidth",
+					displayName: t("optLabelWidth"),
+					default: LABEL_WIDTH_DEFAULT,
+					min: LABEL_WIDTH_MIN,
+					max: LABEL_WIDTH_MAX,
+					step: 10,
+					instant: true,
+				},
 				{
 					type: "dropdown",
 					key: "rangePadding",
@@ -153,6 +174,7 @@ export class TimelineView extends BasesView {
 	private store: TimelineStore = createTimelineStore();
 	private resizeObserver: ResizeObserver | null = null;
 	private ready = false;
+	private previousUsePropertyDisplay: boolean | null = null;
 
 	constructor(
 		controller: QueryController,
@@ -195,12 +217,24 @@ export class TimelineView extends BasesView {
 		}
 		this.containerEl.empty();
 		this.containerEl.removeClass("tm-timeline-root");
+		this.containerEl.style.removeProperty("--tm-tl-label-width");
 	}
 
 	onDataUpdated(): void {
 		const startProp = this.config.getAsPropertyId("startProp");
 		const endProp = this.config.getAsPropertyId("endProp");
+		const usePropertyDisplay = this.config.get("usePropertyDisplay") === true;
+		if (this.previousUsePropertyDisplay === false && usePropertyDisplay) {
+			new TimelinePropertyDisplayModal(this.app).open();
+		}
+		this.previousUsePropertyDisplay = usePropertyDisplay;
 		const scale = ((this.config.get("scale") as TimelineScale | undefined) ?? "week");
+		const rawLabelWidth = this.config.get("labelWidth");
+		const configuredLabelWidth = rawLabelWidth == null ? NaN : Number(rawLabelWidth);
+		const labelWidthPx = Number.isFinite(configuredLabelWidth)
+			? Math.min(LABEL_WIDTH_MAX, Math.max(LABEL_WIDTH_MIN, configuredLabelWidth))
+			: LABEL_WIDTH_DEFAULT;
+		this.containerEl.style.setProperty("--tm-tl-label-width", `${labelWidthPx}px`);
 		const autoZoom = this.config.get("autoZoom") === true;
 		const rawZoom = this.config.get("zoom");
 		// Percentage of the scale's default density.
@@ -216,6 +250,11 @@ export class TimelineView extends BasesView {
 		if (this.config.get("autoZoom") === false) this.config.set("autoZoom", null);
 		if (this.config.get("includeUndated") === false) this.config.set("includeUndated", null);
 		if (rawZoom != null && zoom === 100) this.config.set("zoom", null);
+		if (this.config.get("usePropertyDisplay") === false) this.config.set("usePropertyDisplay", null);
+
+		const visibleProperties = this.data.properties;
+		if (rawLabelWidth != null && labelWidthPx === LABEL_WIDTH_DEFAULT) this.config.set("labelWidth", null);
+		const displayProperty = usePropertyDisplay && visibleProperties.length === 1 ? visibleProperties[0] ?? null : null;
 
 		const writeEnabled = isWritable(startProp) && isWritable(endProp);
 		// Filled in once the range is final; the context closures read it lazily so
@@ -223,7 +262,7 @@ export class TimelineView extends BasesView {
 		const geom = { start: new Date(), units: 0 };
 		const clamp = (offset: number) => Math.min(Math.max(offset, 0), geom.units);
 		const context: TimelineContext = {
-			properties: this.data.properties,
+			displayProperty,
 			renderContext: this.app.renderContext,
 			writeEnabled,
 			openDetail: (file, evt) => openDetail(this.app, file, evt),
@@ -259,6 +298,25 @@ export class TimelineView extends BasesView {
 				lanes: [],
 				context,
 				message: t("timelineChooseDates"),
+				warning: null,
+			});
+			return;
+		}
+
+		if (usePropertyDisplay && visibleProperties.length !== 1) {
+			this.ready = true;
+			this.store.set({
+				hasRange: false,
+				scale,
+				pxPerUnit: 1,
+				rangeStart: new Date(),
+				totalUnits: 0,
+				todayOffset: 0,
+				tiers: [],
+				lanes: [],
+				context,
+				message: visibleProperties.length === 0 ? t("timelineChooseDisplayProperty") : t("timelineChooseOnlyOneDisplayProperty"),
+				warning: null,
 			});
 			return;
 		}
@@ -266,13 +324,20 @@ export class TimelineView extends BasesView {
 		const colorRules = parseRules((this.config.get("colorRules") as string[] | undefined) ?? []);
 		const textColorRules = parseRules((this.config.get("textColorRules") as string[] | undefined) ?? []);
 		const textRules = parseRules((this.config.get("textRules") as string[] | undefined) ?? []);
+		const displayPropertyName = displayProperty ? this.config.getDisplayName(displayProperty) : null;
 
 		const makeRow = (entry: BasesEntry): TimelineRow => {
 			const start = startProp ? getDate(this.app, entry, startProp) : null;
 			const end = endProp ? getDate(this.app, entry, endProp) : null;
+			const display: Pick<TimelineRow, "title" | "displayError"> =
+				displayProperty && displayPropertyName
+					? resolveDisplayTitle(entry, displayProperty, displayPropertyName)
+					: { title: entry.file.basename, displayError: null };
 			return {
 				file: entry.file,
-				title: entry.file.basename,
+				entry,
+				title: display.title,
+				displayError: display.displayError,
 				start,
 				end,
 				undated: !start && !end,
@@ -400,6 +465,13 @@ export class TimelineView extends BasesView {
 		geom.start = rangeStart;
 		geom.units = totalUnits;
 		const todayOffset = offsetOf(today, rangeStart, scale);
+		const invalidDisplayCount = allRows.filter((row) => row.displayError !== null).length;
+		const warning = invalidDisplayCount > 0 && displayPropertyName
+			? t("timelineInvalidDisplayValues")
+				.replace("{count}", String(invalidDisplayCount))
+				.replace("{property}", displayPropertyName)
+			: null;
+
 		this.ready = true;
 
 		this.store.set({
@@ -413,8 +485,38 @@ export class TimelineView extends BasesView {
 			lanes,
 			context,
 			message: null,
+			warning,
 		});
 	}
+}
+function resolveDisplayTitle(
+	entry: BasesEntry,
+	property: Parameters<BasesEntry["getValue"]>[0],
+	propertyName: string,
+): Pick<TimelineRow, "title" | "displayError"> {
+	const value = getValue(entry, property);
+	if (!value) return { title: t("timelineDisplayValueEmpty").replace("{property}", propertyName), displayError: "empty" };
+	if (isErrorValue(value)) {
+		return {
+			title: t("timelineDisplayValueError").replace("{property}", propertyName),
+			displayError: "error",
+		};
+	}
+	try {
+		const title = value.toString().trim();
+		return title
+			? { title, displayError: null }
+			: { title: t("timelineDisplayValueEmpty").replace("{property}", propertyName), displayError: "empty" };
+	} catch {
+		return { title: t("timelineDisplayValueError").replace("{property}", propertyName), displayError: "error" };
+	}
+}
+
+/** ErrorValue is documented but not exported by Obsidian's public declarations. */
+function isErrorValue(value: Value): boolean {
+	const ctor = value.constructor as { type?: unknown };
+	const instanceType = (value as Value & { type?: unknown }).type;
+	return instanceType === "error" || ctor.type === "error";
 }
 
 // Header tiers stack coarsest-first; a scale shows every level down to itself.

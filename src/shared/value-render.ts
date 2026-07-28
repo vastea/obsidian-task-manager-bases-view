@@ -10,6 +10,8 @@ export interface RenderArgs {
 	entry: BasesEntry;
 	propId: BasesPropertyId;
 	ctx: RenderContext;
+	/** Render valid false/zero values too (useful when a property is the item label). */
+	includeFalsy?: boolean;
 }
 
 /** Svelte action: render a property's Value into the node, re-render on change. */
@@ -17,7 +19,7 @@ export function renderValue(node: HTMLElement, args: RenderArgs) {
 	function paint(a: RenderArgs) {
 		node.empty();
 		const value = getValue(a.entry, a.propId);
-		if (value && value.isTruthy()) {
+		if (value && (a.includeFalsy || value.isTruthy())) {
 			value.renderTo(node, a.ctx);
 		}
 	}

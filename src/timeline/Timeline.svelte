@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { TimelineStore } from "./state.svelte";
 	import { t } from "../i18n.svelte";
+	import { renderValue } from "../shared/value-render";
 	import Bar from "./Bar.svelte";
 
 	let { store }: { store: TimelineStore } = $props();
@@ -11,6 +12,11 @@
 
 	const pxPerUnit = $derived(tl.pxPerUnit);
 	const trackWidth = $derived(tl.totalUnits * pxPerUnit);
+
+	function isInteractive(target: EventTarget | null): boolean {
+		const el = target as HTMLElement | null;
+		return !!el?.closest("a, button, input, select, textarea, .internal-link");
+	}
 
 	// Scroll to "today" once when this view first receives a range. Subsequent
 	// range changes come from data updates or drag commits and must preserve the
@@ -30,6 +36,7 @@
 		<div class="tm-empty">{tl.message ?? t("emptyNoData")}</div>
 	{:else}
 		{@const ctx = tl.context}
+		{#if tl.warning}<div class="tm-tl-warning">{tl.warning}</div>{/if}
 		<div class="tm-tl-scroll" bind:this={scrollEl}>
 			<div class="tm-tl-content">
 				<!-- Full-height grid lines (per cell boundary) so bar spans are readable. -->
@@ -69,10 +76,21 @@
 								class="tm-tl-rowlabel"
 								role="button"
 								tabindex="0"
-								onclick={(e) => ctx.openDetail(row.file, e)}
-								onkeydown={(e) => (e.key === "Enter" ? ctx.openDetail(row.file, e) : null)}
+								onclick={(e) => (isInteractive(e.target) ? null : ctx.openDetail(row.file, e))}
+								class:has-display-error={row.displayError !== null}
+								title={row.displayError ? `${row.file.basename}: ${row.title}` : row.title}
+								onkeydown={(e) => (e.key === "Enter" && !isInteractive(e.target) ? ctx.openDetail(row.file, e) : null)}
 							>
-								{row.title}
+								{#if row.displayError}
+									<span class="tm-tl-display-error">⚠ {row.title}</span>
+								{:else if ctx.displayProperty}
+									<span
+										class="tm-tl-rowlabel-value"
+										use:renderValue={{ entry: row.entry, propId: ctx.displayProperty, ctx: ctx.renderContext, includeFalsy: true }}
+									></span>
+								{:else}
+									{row.title}
+								{/if}
 							</div>
 							<div class="tm-tl-track" style:width="{trackWidth}px">
 								<Bar {row} {pxPerUnit} totalUnits={tl.totalUnits} context={ctx} />

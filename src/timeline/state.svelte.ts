@@ -1,11 +1,14 @@
-import type { BasesPropertyId, RenderContext, TFile } from "obsidian";
+import type { BasesEntry, BasesPropertyId, RenderContext, TFile } from "obsidian";
 import type { BarStyle } from "./color-rules";
 
 export type TimelineScale = "day" | "week" | "month" | "quarter" | "year";
 
 export interface TimelineRow {
+	entry: BasesEntry;
 	file: TFile;
 	title: string;
+	/** The selected display property is empty or returned an error for this row. */
+	displayError: "empty" | "error" | null;
 	/** Start/end as local-midnight Dates, or null when that end is unset. */
 	start: Date | null;
 	end: Date | null;
@@ -36,7 +39,8 @@ export interface TimelineAxisTier {
 }
 
 export interface TimelineContext {
-	properties: BasesPropertyId[];
+	/** The sole visible Bases property used as the row/bar label, or null → filename. */
+	displayProperty: BasesPropertyId | null;
 	renderContext: RenderContext;
 	/** start & end are both writable note.* properties → drag enabled. */
 	writeEnabled: boolean;
@@ -72,6 +76,8 @@ export interface TimelineState {
 	lanes: TimelineLane[];
 	context: TimelineContext | null;
 	message: string | null;
+	/** Non-blocking summary when individual display-property values are invalid. */
+	warning: string | null;
 }
 
 const EMPTY: TimelineState = {
@@ -85,6 +91,7 @@ const EMPTY: TimelineState = {
 	lanes: [],
 	context: null,
 	message: null,
+	warning: null,
 };
 
 export interface TimelineStore {
