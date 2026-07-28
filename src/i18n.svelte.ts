@@ -174,6 +174,7 @@ const dict = {
 	optProperty: { en: "Property", zh: "属性", de: "Eigenschaft" },
 	optScale: { en: "Scale", zh: "刻度", de: "Skala" },
 	optSize: { en: "Size", zh: "大小", de: "Größe" },
+	optLabelWidth: { en: "Label column width (px)", zh: "标签列宽度（px）", de: "Breite der Beschriftungsspalte (px)" },
 	optZoom: { en: "Zoom (%)", zh: "缩放 (%)", de: "Zoom (%)" },
 	optAutoZoom: { en: "Auto zoom", zh: "自动缩放", de: "Auto-Zoom" },
 	optIgnoreMaxUnits: {

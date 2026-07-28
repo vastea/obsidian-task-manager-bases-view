@@ -79,7 +79,7 @@
 								onclick={(e) => (isInteractive(e.target) ? null : ctx.openDetail(row.file, e))}
 								class:has-display-error={row.displayError !== null}
 								title={row.displayError ? `${row.file.basename}: ${row.title}` : row.title}
-								onkeydown={(e) => (e.key === "Enter" ? ctx.openDetail(row.file, e) : null)}
+								onkeydown={(e) => (e.key === "Enter" && !isInteractive(e.target) ? ctx.openDetail(row.file, e) : null)}
 							>
 								{#if row.displayError}
 									<span class="tm-tl-display-error">⚠ {row.title}</span>

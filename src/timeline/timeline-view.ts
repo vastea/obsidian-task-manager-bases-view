@@ -40,6 +40,9 @@ export const TM_TIMELINE_VIEW = "tm-timeline";
 
 /** Width (px) of one cell at zoom 100%, per scale. */
 const PX_DEFAULT: Record<TimelineScale, number> = { day: 48, week: 154, month: 244, quarter: 274, year: 365 };
+const LABEL_WIDTH_DEFAULT = 180;
+const LABEL_WIDTH_MIN = 120;
+const LABEL_WIDTH_MAX = 480;
 
 
 export function timelineViewOptions(config: BasesViewConfig): BasesAllOptions[] {
@@ -93,6 +96,16 @@ export function timelineViewOptions(config: BasesViewConfig): BasesAllOptions[] 
 			type: "group",
 			displayName: t("optSize"),
 			items: [
+				{
+					type: "slider",
+					key: "labelWidth",
+					displayName: t("optLabelWidth"),
+					default: LABEL_WIDTH_DEFAULT,
+					min: LABEL_WIDTH_MIN,
+					max: LABEL_WIDTH_MAX,
+					step: 10,
+					instant: true,
+				},
 				{
 					type: "dropdown",
 					key: "rangePadding",
@@ -204,6 +217,7 @@ export class TimelineView extends BasesView {
 		}
 		this.containerEl.empty();
 		this.containerEl.removeClass("tm-timeline-root");
+		this.containerEl.style.removeProperty("--tm-tl-label-width");
 	}
 
 	onDataUpdated(): void {
@@ -215,6 +229,12 @@ export class TimelineView extends BasesView {
 		}
 		this.previousUsePropertyDisplay = usePropertyDisplay;
 		const scale = ((this.config.get("scale") as TimelineScale | undefined) ?? "week");
+		const rawLabelWidth = this.config.get("labelWidth");
+		const configuredLabelWidth = rawLabelWidth == null ? NaN : Number(rawLabelWidth);
+		const labelWidthPx = Number.isFinite(configuredLabelWidth)
+			? Math.min(LABEL_WIDTH_MAX, Math.max(LABEL_WIDTH_MIN, configuredLabelWidth))
+			: LABEL_WIDTH_DEFAULT;
+		this.containerEl.style.setProperty("--tm-tl-label-width", `${labelWidthPx}px`);
 		const autoZoom = this.config.get("autoZoom") === true;
 		const rawZoom = this.config.get("zoom");
 		// Percentage of the scale's default density.
@@ -233,6 +253,7 @@ export class TimelineView extends BasesView {
 		if (this.config.get("usePropertyDisplay") === false) this.config.set("usePropertyDisplay", null);
 
 		const visibleProperties = this.data.properties;
+		if (rawLabelWidth != null && labelWidthPx === LABEL_WIDTH_DEFAULT) this.config.set("labelWidth", null);
 		const displayProperty = usePropertyDisplay && visibleProperties.length === 1 ? visibleProperties[0] ?? null : null;
 
 		const writeEnabled = isWritable(startProp) && isWritable(endProp);
@@ -483,9 +504,6 @@ function resolveDisplayTitle(
 	}
 	try {
 		const title = value.toString().trim();
-		if (title && !value.isTruthy() && title !== "false" && title !== "0") {
-			return { title: t("timelineDisplayValueError").replace("{property}", propertyName), displayError: "error" };
-		}
 		return title
 			? { title, displayError: null }
 			: { title: t("timelineDisplayValueEmpty").replace("{property}", propertyName), displayError: "empty" };
@@ -496,9 +514,9 @@ function resolveDisplayTitle(
 
 /** ErrorValue is documented but not exported by Obsidian's public declarations. */
 function isErrorValue(value: Value): boolean {
-	const ctor = value.constructor as { name?: string; type?: unknown };
+	const ctor = value.constructor as { type?: unknown };
 	const instanceType = (value as Value & { type?: unknown }).type;
-	return instanceType === "error" || ctor.type === "error" || ctor.name === "ErrorValue";
+	return instanceType === "error" || ctor.type === "error";
 }
 
 // Header tiers stack coarsest-first; a scale shows every level down to itself.
